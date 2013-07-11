@@ -387,7 +387,7 @@ class JumperPlugin(b3.plugin.Plugin):
      
     def cmd_jmprecord(self, data, client, cmd=None):
         """\
-        [<client>] Display the record(s) of a client on the current map
+        [<client>] - Display the record(s) of a client on the current map
         """
         if not data: 
             sclient = client
@@ -452,7 +452,7 @@ class JumperPlugin(b3.plugin.Plugin):
     
     def cmd_jmpdelrecord(self, data, client, cmd=None):
         """\
-        [<client>] Remove current map client record(s) from the storage
+        [<client>] - Remove current map client record(s) from the storage
         """
         if not data: 
             sclient = client
