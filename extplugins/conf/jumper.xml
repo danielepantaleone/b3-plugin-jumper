@@ -1,0 +1,11 @@
+<configuration plugin="jumper">
+    <settings name="commands">
+        <set name='jmprecord-record'>0</set>
+        <set name='jmpmaprecord-maprecord'>0</set>
+        <set name='jmpdelrecord-delrecord'>0</set>
+    </settings>
+    <setting name="settings">
+        <set name="demorecord">True</set>               <!-- Specify whether to record a demo on every jump run attempt [Default = True]-->
+        <set name="minleveldelete">80</set>             <!-- Clients with this level and above will be able to delete other client's records [Default = 80] -->
+    </setting>
+</configuration>
