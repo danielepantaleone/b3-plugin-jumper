@@ -8,7 +8,7 @@ Jumper Plugin for BigBrotherBot
 This plugin provides an advanced statistics system for Urban Terror 4.2.x Jump Servers.<br /> 
 The plugin is capable of storing permanently all the timings performed during jump runs, offering also the possibility to list player and map records.<br />
 The plugin also offer a system of server side demo auto recording whenever a jump run is started. The demo is kept on the server only if the client made at least his personal record on the current map.<br />
-The demo auto recording feature can be disabled during the plugin configuration (the feature will work depending on your system configuration).<br />
+The demo auto recording feature can be disabled during the plugin configuration (the feature will work depending on your system configuration).<br /><br />
 **NOTE:** *This plugin is currently under development, and is not to be considered stable nor complete.*
 
 ## How to install
@@ -27,13 +27,13 @@ Because of that both b3 and the UrT needs to be executed by the same OS user (so
 
 ### Requirements
 
-* Urban Terror 4.2 server [g_modversion > 4.2.013]
-* iourt42 parser [version > 1.12]
+* Urban Terror 4.2 server [g_modversion >= 4.2.013]
+* iourt42 parser [version >= 1.12]
 
 ## In-game user guide
 
-* **!record [<client>]** *Display the record(s) of a client on the current map*
-* **!delrecord [<client>]** *Remove current map client record(s) from the storage*
+* **!record [client]** *Display the record(s) of a client on the current map*
+* **!delrecord [client]** *Remove current map client record(s) from the storage*
 * **!maprecord** *Display the current map record(s)*
 
 ## Support
