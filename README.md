@@ -1,8 +1,6 @@
 Jumper Plugin for BigBrotherBot
 ===============================
 
-## NOTE
-
 ## Description
 
 This plugin provides an advanced statistics system for Urban Terror 4.2.x Jump Servers.<br /> 
