@@ -490,4 +490,5 @@ class JumperPlugin(b3.plugin.Plugin):
         
         # Removing database tuples for the given client
         self.console.storage.query(self._sql['q7'] % (sclient.id, mapname))
+        self.verbose('Removed %d record%s for %s[@%s] on map %s' % (num, 's' if num > 1 else '', sclient.name, sclient.id, mapname))
         client.message('^7Removed ^1%d ^7record%s for %s on map ^4%s' % (num, 's' if num > 1 else '', sclient.name, mapname))
