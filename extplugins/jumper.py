@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '0.1'
+__version__ = '0.2'
 
 import b3
 import b3.plugin
@@ -40,8 +40,16 @@ class JumperPlugin(b3.plugin.Plugin):
              'q5' : "INSERT INTO `jumpruns` (`client_id`, `mapname`, `way_id`, `way_time`, `time_add`, `time_edit`, `demo`) VALUES ('%s', '%s', '%d', '%s', '%d', '%d', '%d', '%s')",
              'q6' : "UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s' AND `mapname` = '%s' AND `way_id` = '%d'", 
              'q7' : "DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'" }
-
-
+    
+    
+    def __init__(self, console, config):
+        """
+        Build the plugin object
+        """
+        if console.gameName != 'iourt42':
+            console.critical("Jumper plugin can only work with Urban Terror 4.2")
+      
+      
     def onLoadConfig(self):
         """
         Load plugin configuration
@@ -67,10 +75,6 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         Initialize plugin settings
         """
-        # Check correct configuration
-        if self.console.gameName != 'iourt42':
-            raise AssertionError("Jumper plugin can only work with Urban Terror 4.2")
-        
         # Get the admin plugin
         self._adminPlugin = self.console.getPlugin('admin')
         if not self._adminPlugin:    
