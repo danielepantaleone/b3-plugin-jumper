@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '0.2'
+__version__ = '0.2.1'
 
 import b3
 import b3.plugin
@@ -48,6 +48,9 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         if console.gameName != 'iourt42':
             console.critical("Jumper plugin can only work with Urban Terror 4.2")
+        
+        # Correctly initialize the plugin
+        super(JumperPlugin, self).__init__(console, config)
       
       
     def onLoadConfig(self):
