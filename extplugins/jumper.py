@@ -17,27 +17,29 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '0.2.2'
+__version__ = '0.3'
 
 import b3
 import b3.plugin
 import b3.events
 import time
 import os
+import re
     
 class JumperPlugin(b3.plugin.Plugin):
     
     _adminPlugin = None
     
-    _demoFolder = None
     _demoRecord = False
     _minLevelDelete = 80
+    
+    _demoRecordRegExp = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
     
     _sql = { 'q1' : "SELECT * FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s' AND `way_id` = '%d'",
              'q2' : "SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'",
              'q3' : "SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE `mapname` =  '%s' GROUP BY `way_id`) ORDER BY `way_id` ASC",
              'q4' : "SELECT * FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s' ORDER BY `way_id` ASC",
-             'q5' : "INSERT INTO `jumpruns` (`client_id`, `mapname`, `way_id`, `way_time`, `time_add`, `time_edit`, `demo`) VALUES ('%s', '%s', '%d', '%s', '%d', '%d', '%d', '%s')",
+             'q5' : "INSERT INTO `jumpruns` (`client_id`, `mapname`, `way_id`, `way_time`, `time_add`, `time_edit`, `demo`) VALUES ('%s', '%s', '%d', '%d', '%d', '%d', '%s')",
              'q6' : "UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s' AND `mapname` = '%s' AND `way_id` = '%d'", 
              'q7' : "DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'" }
     
@@ -223,17 +225,7 @@ class JumperPlugin(b3.plugin.Plugin):
     def unLinkDemo(self, filename):
         """
         Remove a server side demo file
-        """
-        if self._demoFolder is None:
-            
-            try:
-                self._demoFolder = self.console.getCvar('sv_demofolder').getString().rstrip('/')
-                self.debug('Retrieved CVAR[sv_demofolder]: %s' % self._demoRecord)
-            except Exception, e:
-                self.warning('Could not retrieve CVAR[sv_demofolder]: %s' % e)
-                self._demoFolder = None
-                return
-        
+        """        
         if self.console.game.fs_game is None:
             
             try:
@@ -254,7 +246,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 self.console.game.fs_basepath = None
             
         # Construct a possible demo filepath where to search the demo which is going to be deleted
-        demopath = self.console.game.fs_basepath + '/' + self.console.game.fs_game + '/' + self._demoFolder + '/' + filename
+        demopath = self.console.game.fs_basepath + '/' + self.console.game.fs_game + '/' + filename
         
         if not os.path.isfile(demopath):
             self.debug('Could not find demo file at %s' % demopath)
@@ -268,11 +260,11 @@ class JumperPlugin(b3.plugin.Plugin):
                     self.console.game.fs_homepath = None
                 
             # Construct a possible demo filepath where to search the demo which is going to be deleted
-            demopath = self.console.game.fs_homepath + '/' + self.console.game.fs_game + '/' + self._demoFolder + '/' + filename
+            demopath = self.console.game.fs_homepath + '/' + self.console.game.fs_game + '/' + filename
             
         if not os.path.isfile(demopath):
             self.debug('Could not find demo file at %s' % demopath)
-            self.error('Could not delete demo file %s. File not found!')
+            self.error('Could not delete demo file. File not found!')
             return 
             
         try: 
@@ -289,14 +281,26 @@ class JumperPlugin(b3.plugin.Plugin):
         Handle EVT_CLIENT_JUMP_RUN_START
         """
         client = event.client
+        
+        if self._demoRecord and client.var(self, 'jumprun').value \
+                            and client.var(self, 'demoname').value is not None:
+                
+            self.console.write('stopserverdemo %s' % (client.cid))
+            self.unLinkDemo(client.var(self, 'demoname').value)
+        
         client.setvar(self, 'jumprun', True)
         
         # If we are suppose to record a demo of the jumprun
         # start it and store the demo name in the client object
         if self._demoRecord:
             response = self.console.write('startserverdemo %s' % (client.cid))
-            demoname = response[4].split("/")[1]
-            client.setvar(self, 'demoname', demoname)
+            match = self._demoRecordRegExp.match(response)
+            if match:
+                demoname = match.group('file')
+                client.setvar(self, 'demoname', demoname)
+            else:
+                # Something went wrong while retrieving the demo file name
+                self.warning("Could not retrieve demo file name for client %s[@%s]: %s" % (client.name, client.id, response))
 
 
     def onJumpRunCancel(self, event):
@@ -345,7 +349,7 @@ class JumperPlugin(b3.plugin.Plugin):
             client.message('^4%s ^3[way:^7%d^3] ^7| ^2%s' % (mapname, way_id, strtime))
         
 
-    def onRoundStart(self, event):
+    def onRoundStart(self):
         """
         Handle EVT_GAME_ROUND_START
         """
@@ -420,7 +424,7 @@ class JumperPlugin(b3.plugin.Plugin):
             if not sclient:
                 continue
             
-            cmd.sayLoudOrPM(client, '^3[^7way:^1%s^3] ^7| ^2%s ^7since ^3%s' % (sclient.name, r['way_id'], 
+            cmd.sayLoudOrPM(client, '^3[^7way:^1%s^3] ^7| ^2%s ^7since ^3%s' % (r['way_id'], 
                                                                                 self.getTimeString(int(r['way_time'])), 
                                                                                 self.getDateString(int(r['time_edit']))))
             cursor.moveNext()
@@ -491,6 +495,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 r = cursor.getRow()
                 if r['demo'] is not None:
                     self.unLinkDemo(r['demo'])
+                cursor.moveNext()
             
         cursor.close()
         
