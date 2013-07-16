@@ -341,11 +341,11 @@ class JumperPlugin(b3.plugin.Plugin):
         
         if self.isMapRecord(event):
             # Informing everyone of the new map record
-            self.console.say('^1%s established a new map record!' % client.name)
+            self.console.say('^7%s established a new ^1MAP RECORD^7!' % client.name)
             self.console.say('^4%s ^3[way:^7%d^3] ^7| ^2%s' % (mapname, way_id, strtime))
         else:
             # Informing the client of the new personal record
-            client.message('^7You established a new personal record on this map!')
+            client.message('^7You established a new ^3PERSONAL RECORD ^7on this map!')
             client.message('^4%s ^3[way:^7%d^3] ^7| ^2%s' % (mapname, way_id, strtime))
         
 
