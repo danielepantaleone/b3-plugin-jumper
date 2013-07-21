@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '0.3'
+__version__ = '0.3.1'
 
 import b3
 import b3.plugin
@@ -204,7 +204,7 @@ class JumperPlugin(b3.plugin.Plugin):
     
     def isMapRecord(self, event):
         """
-        Return True is the client established new absolute record
+        Return True fs the client established a new absolute record
         on this map and on the given way_id, False otherwise
         """   
         mapname = self.console.game.mapName
