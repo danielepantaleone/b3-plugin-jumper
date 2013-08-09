@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '1.0'
+__version__ = '2.0'
 
 import b3
 import b3.plugin
