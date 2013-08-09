@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '0.3.1'
+__version__ = '1.0'
 
 import b3
 import b3.plugin
@@ -33,7 +33,7 @@ class JumperPlugin(b3.plugin.Plugin):
     _demoRecord = False
     _minLevelDelete = 80
     
-    _demoRecordRegExp = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
+    _demoRecordRegEx = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
     
     _sql = { 'q1' : "SELECT * FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s' AND `way_id` = '%d'",
              'q2' : "SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'",
@@ -64,14 +64,14 @@ class JumperPlugin(b3.plugin.Plugin):
             self._demoRecord = self.config.getboolean('settings', 'demorecord')
             self.debug('Loaded automatic demo record: %r' % self._demoRecord)
         except Exception, e:
-            self.error('Unable to load automatic demo record setting: %s' % e)
+            self.error('Could not load automatic demo record setting: %s' % e)
             self.debug('Using default value for automatic demo record setting: %r' % self._demoRecord)
         
         try:
             self._minLevelDelete = self.config.getint('settings', 'minleveldelete')
             self.debug('Loaded minimum level delete: %d' % self._minLevelDelete)
         except Exception, e:
-            self.error('Unable to load minimum level delete setting: %s' % e)
+            self.error('Could not load minimum level delete setting: %s' % e)
             self.debug('Using default value for minimum level delete setting: %d' % self._minLevelDelete)
 
 
@@ -294,13 +294,13 @@ class JumperPlugin(b3.plugin.Plugin):
         # start it and store the demo name in the client object
         if self._demoRecord:
             response = self.console.write('startserverdemo %s' % (client.cid))
-            match = self._demoRecordRegExp.match(response)
+            match = self._demoRecordRegEx.match(response)
             if match:
                 demoname = match.group('file')
                 client.setvar(self, 'demoname', demoname)
             else:
-                # Something went wrong while retrieving the demo file name
-                self.warning("Could not retrieve demo file name for client %s[@%s]: %s" % (client.name, client.id, response))
+                # Something went wrong while retrieving the demo filename
+                self.warning("Could not retrieve demo filename for client %s[@%s]: %s" % (client.name, client.id, response))
 
 
     def onJumpRunCancel(self, event):
