@@ -17,12 +17,15 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.0'
+__version__ = '2.1'
 
 import b3
 import b3.plugin
 import b3.events
+import urllib2
+import json
 import time
+import datetime
 import os
 import re
     
@@ -32,6 +35,7 @@ class JumperPlugin(b3.plugin.Plugin):
     
     _demoRecord = False
     _minLevelDelete = 80
+    _mapInfo = {}
     
     _demoRecordRegEx = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
     
@@ -164,6 +168,33 @@ class JumperPlugin(b3.plugin.Plugin):
         mins -= hour * 60
         return "%01d:%02d:%02d.%03d" % (hour, mins, secs, msec)
     
+    
+    def getMapInfo(self):
+        """
+        Retrieve map info from UrTJumpers API
+        """
+        mapinfo = { }
+        self.debug("Contacting http://api.urtjumpers.com to retrieve necessary data...")
+        
+        try:
+        
+            jsondata = json.load(urllib2.urlopen('http://api.urtjumpers.com/?key=B3urtjumpersplugin&liste=maps&format=json'))
+            for data in jsondata:
+                info = { 'name'    : data['nom'],
+                         'bsp'     : data['pk3'], 
+                         'author'  : data['mapper'], 
+                         'level'   : data['level'], 
+                         'date'    : data['mdate'] }
+                
+                mapinfo[info['bsp']] = info
+        
+        except urllib2.URLError, e:
+            self.warning("Could not connect to http://api.urtjumpers.com: %s" % e)
+            return { }
+            
+        self.debug("Retrieved %d maps from http://api.urtjumpers.com" % len(mapinfo))
+        return mapinfo
+        
     
     def isPersonalRecord(self, event):
         """
@@ -361,6 +392,9 @@ class JumperPlugin(b3.plugin.Plugin):
                 self.console.write('stopserverdemo %s' % (client.cid))
                 self.unLinkDemo(client.var(self, 'demoname').value)
                 client.setvar(self, 'jumprun', False)
+                
+        # Refresh map informations
+        self._mapInfo = self.getMapInfo()
                     
     
     def onDisconnect(self, event):
@@ -504,3 +538,32 @@ class JumperPlugin(b3.plugin.Plugin):
         self.console.storage.query(self._sql['q7'] % (sclient.id, mapname))
         self.verbose('Removed %d record%s for %s[@%s] on map %s' % (num, 's' if num > 1 else '', sclient.name, sclient.id, mapname))
         client.message('^7Removed ^1%d ^7record%s for %s on map ^4%s' % (num, 's' if num > 1 else '', sclient.name, mapname))
+
+
+    def cmd_jmpmapinfo(self, data, client, cmd=None):
+        """\
+        Display map specific informations
+        """
+        if not self._mapInfo:
+            # Fetch info from API
+            self._mapInfo = self.getMapInfo()
+            
+        if not self._mapInfo:
+            cmd.sayLoudOrPM(client, 'Could not contact UrTJumpers API')
+            return
+        
+        mapname = self.console.game.mapName
+        if not self._mapInfo[mapname]:
+            cmd.sayLoudOrPM(client, 'Could not find info for map ^1%s' % mapname) 
+            return
+        
+        # Format data
+        n = self._mapInfo[mapname]['name']
+        a = self._mapInfo[mapname]['author']
+        d = self._mapInfo[mapname]['date']
+        t = int(datetime.datetime.strptime(d, '%Y-%m-%d').strftime('%s'))
+                
+        cmd.sayLoudOrPM(client, '^7%s ^3created by ^7%s' % (n, a))
+        cmd.sayLoudOrPM(client, '^3Released on ^7%s' % self.getDateString(t))
+
+        
