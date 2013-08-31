@@ -32,6 +32,7 @@ Because of that both b3 and the UrT needs to be executed by the same OS user (so
 * **!record [client]** *Display the record(s) of a client on the current map*
 * **!delrecord [client]** *Remove current map client record(s) from the storage*
 * **!maprecord** *Display the current map record(s)*
+* **!mapinfo** *Display the current map informations (thanks UrTJumpers community)*
 
 ## Support
 
