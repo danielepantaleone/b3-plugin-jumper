@@ -6,7 +6,8 @@ Jumper Plugin for BigBrotherBot
 This plugin provides an advanced statistics system for Urban Terror 4.2 Jump servers.<br /> 
 The plugin is capable of storing permanently all the timings performed during jump runs, offering also the possibility to list player and map records.<br />
 The plugin also offer a system of server side demo auto recording whenever a jump run is started. The demo is kept on the server only if the client made at least his personal record on the current map.<br />
-The demo auto recording feature can be disabled during the plugin configuration (the feature will work depending on your system configuration).<br /><br />
+The demo auto recording feature can be disabled during the plugin configuration (the feature will work depending on your system configuration).<br />
+Since version 2.1 this plugin provides a new command (**!jmpmapinfo***) which gets maps information (such as author, release date, level, etc.) and display them in-game. This has been made possible thanks to the **UrTJumpers** community which provides the API system.<br /><br />
 
 ## How to install
 
