@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.1'
+__version__ = '2.1.1'
 
 import b3
 import b3.plugin
@@ -28,6 +28,7 @@ import time
 import datetime
 import os
 import re
+from b3.functions import soundex, levenshteinDistance, getStuffSoundingLike
     
 class JumperPlugin(b3.plugin.Plugin):
     
@@ -194,7 +195,20 @@ class JumperPlugin(b3.plugin.Plugin):
             
         self.debug("Retrieved %d maps from http://api.urtjumpers.com" % len(mapinfo))
         return mapinfo
-        
+    
+    
+    def getMapsList(self):
+        """
+        Returns maps list from self._mapInfo
+        """
+        mapslist = []
+        for key in self._mapInfo.keys():
+            mapslist.append(key)
+            
+        #self.debug("Maps list from self._mapInfo: %s" % mapslist)
+        self.debug("Retrieved %d maps from self._mapInfo" % len(mapslist))
+        return mapslist
+    
     
     def isPersonalRecord(self, event):
         """
@@ -395,7 +409,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 
         # Refresh map informations
         self._mapInfo = self.getMapInfo()
-                    
+        self._mapsList = self.getMapsList()            
     
     def onDisconnect(self, event):
         """
@@ -423,8 +437,46 @@ class JumperPlugin(b3.plugin.Plugin):
                 self.console.write('stopserverdemo %s' % (client.cid))
                 self.unLinkDemo(client.var(self, 'demoname').value)
                 client.setvar(self, 'jumprun', False)
-        
 
+    def getMapFromList(self, map_name):
+        """\
+        load a given map/level
+        return a list of suggested map names in cases it fails to recognize the map that was provided
+        """
+        rv = self.getMapsFromListSoundingLike(map_name)
+        if isinstance(rv, basestring):
+            self.debug('map found: %s' % rv)
+        else:
+            self.debug('maps found: %s' % rv)			
+
+        return rv	
+
+    def getMapsFromListSoundingLike(self, mapname):
+        """ return a valid mapname.
+        If no exact match is found, then return close candidates as a list
+        """
+        wanted_map = mapname.lower()
+        supportedMaps = self._mapsList
+        if wanted_map in supportedMaps:
+            return wanted_map
+
+        cleaned_supportedMaps = {}
+        for map_name in supportedMaps:
+            cleaned_supportedMaps[re.sub("^ut4?_", '', map_name, count=1)] = map_name
+
+        if wanted_map in cleaned_supportedMaps:
+            return cleaned_supportedMaps[wanted_map]
+
+        cleaned_wanted_map = re.sub("^ut4?_", '', wanted_map, count=1)
+
+        matches = [cleaned_supportedMaps[match] for match in getStuffSoundingLike(cleaned_wanted_map, cleaned_supportedMaps.keys())]
+        if len(matches) == 1:
+            # one match, get the map id
+            return matches[0]
+        else:
+            # multiple matches, provide suggestions
+            return matches
+        
     # ######################################################################################### #
     # ######################################## COMMANDS ####################################### #        
     # ######################################################################################### # 
@@ -542,28 +594,52 @@ class JumperPlugin(b3.plugin.Plugin):
 
     def cmd_jmpmapinfo(self, data, client, cmd=None):
         """\
-        Display map specific informations
+        [<map>] Display map specific informations
         """
         if not self._mapInfo:
             # Fetch info from API
             self._mapInfo = self.getMapInfo()
+            self._mapsList = self.getMapsList()
             
         if not self._mapInfo:
             cmd.sayLoudOrPM(client, 'Could not contact UrTJumpers API')
             return
+
+        if not data:
+            mapname = self.console.game.mapName
+            if not self._mapInfo[mapname]:
+                cmd.sayLoudOrPM(client, 'Could not find info for map ^1%s' % mapname) 
+                return
+                    
+        else:
+            ### define self._mapsList there doesnt work :(
+            #130907 13:35:36	ERROR	"handler AdminPlugin could not handle event Say: AttributeError: JumperPlugin instance has no attribute '_mapsList' [('/***/b3/b3/parser.py', 1055, 'handleEvents', 'hfunc.parseEvent(event)'), ('/***/b3/b3/plugin.py', 158, 'parseEvent', 'self.onEvent(event)'), ('/***/b3/b3/plugin.py', 176, 'onEvent', 'self.handle(event)'), ('/***/b3/b3/plugins/admin.py', 296, 'handle', 'self.OnSay(event)'), ('/***/b3/b3/plugins/admin.py', 441, 'OnSay', 'results = command.execute(data, event.client)'), ('/***/b3/b3/plugins/admin.py', 2227, 'execute', 'self.func(data, client, copy.copy(self))'), ('/***/b3/b3/extplugins/jumper.py', 615, 'cmd_jmpmapinfo', 'if not self._mapsList:')]"
+            #if not self._mapsList:
+            #    # get maps list from self._mapInfo
+            #    self._mapsList = self.getMapsList()
+            
+            # Try to get exact map name
+            mapname = self.getMapFromList(data)
+            if type(mapname) == list:
+                client.message('do you mean : %s ?' % ', '.join(mapname[:5]))
+                return
         
-        mapname = self.console.game.mapName
-        if not self._mapInfo[mapname]:
-            cmd.sayLoudOrPM(client, 'Could not find info for map ^1%s' % mapname) 
-            return
-        
+        ## exact map name found... LET'S GO!
         # Format data
         n = self._mapInfo[mapname]['name']
         a = self._mapInfo[mapname]['author']
         d = self._mapInfo[mapname]['date']
         t = int(datetime.datetime.strptime(d, '%Y-%m-%d').strftime('%s'))
-                
-        cmd.sayLoudOrPM(client, '^7%s ^3created by ^7%s' % (n, a))
-        cmd.sayLoudOrPM(client, '^3Released on ^7%s' % self.getDateString(t))
-
+        l = int(self._mapInfo[mapname]['level'])
         
+        # Some maps have not mapper known
+        if not a:
+            cmd.sayLoudOrPM(client, '^3We don\'t know the mapper of ^7%s' % n)
+        else:
+            cmd.sayLoudOrPM(client, '^7%s ^3created by ^7%s' % (n, a))
+        cmd.sayLoudOrPM(client, '^3Released on ^7%s' % self.getDateString(t))
+        
+        # if level is defined
+        if l > 0:
+            cmd.sayLoudOrPM(client, '^3Level: ^7%d/100' % l)
+            
