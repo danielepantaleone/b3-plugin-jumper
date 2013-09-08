@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.2.1'
+__version__ = '2.3'
 
 import b3
 import b3.plugin
@@ -173,21 +173,14 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         Retrieve map info from UrTJumpers API
         """
-        mapData = { }
+        mapData = {}
         self.debug("Contacting http://api.urtjumpers.com to retrieve necessary data...")
         
         try:
         
             jsondata = json.load(urllib2.urlopen('http://api.urtjumpers.com/?key=B3urtjumpersplugin&liste=maps&format=json'))
             for data in jsondata:
-                
-                info = { 'name'    : data['nom'],
-                         'bsp'     : data['pk3'], 
-                         'author'  : data['mapper'], 
-                         'level'   : data['level'], 
-                         'date'    : data['mdate'] }
-                
-                mapData[info['bsp'].lower()] = info
+                mapData[data['pk3'].lower()] = data
         
         except urllib2.URLError, e:
             self.warning("Could not connect to http://api.urtjumpers.com: %s" % e)
@@ -596,13 +589,15 @@ class JumperPlugin(b3.plugin.Plugin):
         if not self._mapData[mapname]:
             cmd.sayLoudOrPM(client, 'Could not find info for map ^1%s' % mapname) 
             return
-            
+
         # Fetch informations
-        n = self._mapData[mapname]['name']
-        a = self._mapData[mapname]['author']
-        d = self._mapData[mapname]['date']
+        n = self._mapData[mapname]['nom']
+        a = self._mapData[mapname]['mapper']
+        d = self._mapData[mapname]['mdate']
+        j = self._mapData[mapname]['njump']
         t = int(datetime.datetime.strptime(d, '%Y-%m-%d').strftime('%s'))
         l = int(self._mapData[mapname]['level'])
+        w = int(self._mapData[mapname]['nway'])
         
         if not a:
             # The author of this map is not stored
@@ -611,10 +606,18 @@ class JumperPlugin(b3.plugin.Plugin):
             # We know who is the creator of this map
             cmd.sayLoudOrPM(client, '^7%s ^3has been created by ^7%s' % (n, a))
         
-        # We always know when a map has been released
+        # We always know when the map has been released
         cmd.sayLoudOrPM(client, '^3It has been released on ^7%s' % self.getDateString(t))
         
+        if not j:
+            # Number of jumps is unknown for this map
+            cmd.sayLoudOrPM(client, '^3It\'s composed of ^7%d ^3way%s' % (w, 's' if w > 1 else ' only'))
+        else:
+            # We know both how many jumps this map has and how many ways
+            cmd.sayLoudOrPM(client, '^3It\'s composed of ^7%s ^3jumps and ^7%d ^3way%s' % (j, w, 's' if w > 1 else ''))
+            
         if l > 0:
             # Map level is defined
             cmd.sayLoudOrPM(client, '^3Level: ^7%d^3/^7100' % l)
+
             
