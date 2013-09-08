@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.2'
+__version__ = '2.2.1'
 
 import b3
 import b3.plugin
@@ -28,7 +28,6 @@ import time
 import datetime
 import os
 import re
-from b3.functions import getStuffSoundingLike
     
 class JumperPlugin(b3.plugin.Plugin):
     
@@ -200,27 +199,21 @@ class JumperPlugin(b3.plugin.Plugin):
     
     def getMapsFromListSoundingLike(self, mapname):
         """
-        Return a valid map name by matching the given string
-        If no exact match is found, a list of close candidates is returned
+        Return a list of maps matching the given search key
         The search is performed on the maplist retrieved from the API
         """
-        mapList = []
-        for key in self._mapData.keys():
-            mapList.append(key)
+        matches = []
+        mapname = mapname.lower()
         
-        wantedMap = mapname.lower()
-        if wantedMap in mapList:
-            return wantedMap
-
-        cleanMapList = {}
-        for m in mapList:
-            cleanMapList[re.sub("^ut4?_", '', m, count=1)] = m
-
-        if wantedMap in cleanMapList:
-            return cleanMapList[wantedMap]
-
-        cleanWantedMap = re.sub("^ut4?_", '', wantedMap, count=1)
-        matches = [cleanMapList[match] for match in getStuffSoundingLike(cleanWantedMap, cleanMapList.keys())]
+        # Check exact match at first
+        if mapname in self._mapData.keys():
+            matches.append(mapname)
+            return matches
+        
+        # Check for substring match
+        for key in self._mapData.keys():
+            if mapname in key:
+                matches.append(key)
         
         return matches
         
@@ -587,6 +580,10 @@ class JumperPlugin(b3.plugin.Plugin):
         else:
             # Search info for the specified map
             matches = self.getMapsFromListSoundingLike(data) 
+            
+            if len(matches) == 0:
+                client.message('Could not find any map matching ^1%s' % mapname)
+                return
             
             if len(matches) > 1:
                 client.message('Do you mean: %s?' % ', '.join(matches[:5]))
