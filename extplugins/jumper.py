@@ -250,7 +250,7 @@ class JumperPlugin(b3.plugin.Plugin):
     
     def isMapRecord(self, event):
         """
-        Return True fs the client established a new absolute record
+        Return True if the client established a new absolute record
         on this map and on the given way_id, False otherwise
         """   
         mapname = self.console.game.mapName
