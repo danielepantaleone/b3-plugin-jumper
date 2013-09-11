@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.3'
+__version__ = '2.3.1'
 
 import b3
 import b3.plugin
@@ -586,7 +586,7 @@ class JumperPlugin(b3.plugin.Plugin):
         
         mapname = mapname.lower()
 
-        if not self._mapData[mapname]:
+        if mapname not in self._mapData:
             cmd.sayLoudOrPM(client, 'Could not find info for map ^1%s' % mapname) 
             return
 
