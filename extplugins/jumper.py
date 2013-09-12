@@ -412,6 +412,7 @@ class JumperPlugin(b3.plugin.Plugin):
         self._mapData = self.getMapInfo()
         self._mapsList = self.getMapsList()            
     
+    
     def onDisconnect(self, event):
         """
         Handle EVT_CLIENT_DISCONNECT
