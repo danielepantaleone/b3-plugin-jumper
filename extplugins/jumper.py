@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.3.1'
+__version__ = '2.3.2'
 
 import b3
 import b3.plugin
@@ -388,11 +388,11 @@ class JumperPlugin(b3.plugin.Plugin):
         
         if self.isMapRecord(event):
             # Informing everyone of the new map record
-            self.console.say('^7%s established a new ^1MAP RECORD^7!' % client.name)
+            self.console.say('^7%s established a new ^1map record^7!' % client.name)
             self.console.say('^4%s ^3[way:^7%d^3] ^7| ^2%s' % (mapname, way_id, strtime))
         else:
             # Informing the client of the new personal record
-            client.message('^7You established a new ^3PERSONAL RECORD ^7on this map!')
+            client.message('^7You established a new ^3personal record ^7on this map!')
             client.message('^4%s ^3[way:^7%d^3] ^7| ^2%s' % (mapname, way_id, strtime))
         
 
@@ -565,7 +565,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self._mapData = self.getMapData()
             
         if not self._mapData:
-            cmd.sayLoudOrPM(client, 'Could not contact UrTJumpers API')
+            cmd.sayLoudOrPM(client, 'Could not connect to UrTJumpers API')
             return
 
         if not data:
