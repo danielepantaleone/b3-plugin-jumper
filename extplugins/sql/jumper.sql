@@ -9,3 +9,11 @@ CREATE TABLE IF NOT EXISTS `jumpruns` (
   `demo` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `jumpways` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `mapname` varchar(64) NOT NULL,
+  `way_id` int(3) NOT NULL,
+  `way_name` varchar(64) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
