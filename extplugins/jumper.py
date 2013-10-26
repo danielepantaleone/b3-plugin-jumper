@@ -269,6 +269,7 @@ class JumperPlugin(b3.plugin.Plugin):
         wi = int(event.data['way_id'])
         wt = int(event.data['way_time'])
         dm = cl.var(self, 'demoname').value
+        dm = dm.replace("'", "\'")
         tm = self.console.time()
 
         # check if the client made his personal record on this map and this way
