@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.4'
+__version__ = '2.4.1'
 
 import b3
 import b3.plugin
@@ -226,7 +226,8 @@ class JumperPlugin(b3.plugin.Plugin):
 
         try:
 
-            jd = json.load(urllib2.urlopen('http://api.urtjumpers.com/?key=B3urtjumpersplugin&liste=maps&format=json'))
+            js = urllib2.urlopen('http://api.urtjumpers.com/?key=B3urtjumpersplugin&liste=maps&format=json', timeout=4)
+            jd = json.load(js)
             for data in jd:
                 mapdata[data['pk3'].lower()] = data
 
