@@ -39,17 +39,51 @@ class JumperPlugin(b3.plugin.Plugin):
     _minLevelDelete = 80
 
     _demoRecordRegEx = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
+    _setWayNameRegEx = re.compile(r"""^(?P<way_id>\d+) (?P<way_name>.+)$""");
 
-    _sql = dict(q1="""SELECT * FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
-                q2="""SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'""",
-                q3="""SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_time` IN (SELECT MIN(`way_time`) FROM
-                      `jumpruns` WHERE `mapname` =  '%s' GROUP BY `way_id`) ORDER BY `way_id` ASC""",
-                q4="""SELECT * FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s' ORDER BY `way_id` ASC""",
-                q5="""INSERT INTO `jumpruns` (`client_id`, `mapname`, `way_id`, `way_time`, `time_add`, `time_edit`,
-                      `demo`) VALUES ('%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
-                q6="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE
-                      `client_id` = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
-                q7="""DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""")
+    _sql = dict(jr1="""SELECT * FROM `jumpruns`
+                                WHERE `client_id` = '%s'
+                                AND `mapname` = '%s'
+                                AND `way_id` = '%d'""",
+
+                jr2="""SELECT * FROM `jumpruns`
+                                WHERE `mapname` = '%s'
+                                AND `way_id` = '%d'
+                                AND `way_time` < '%d'""",
+
+                jr3="""SELECT * FROM `jumpruns`
+                                WHERE `mapname` = '%s'
+                                AND `way_time` IN
+                                (SELECT MIN(`way_time`) FROM `jumpruns`
+                                                        WHERE `mapname` =  '%s'
+                                                        GROUP BY `way_id`)
+                                ORDER BY `way_id` ASC""",
+
+                jr4="""SELECT * FROM `jumpruns`
+                                WHERE `client_id` = '%s'
+                                AND `mapname` = '%s'
+                                ORDER BY `way_id` ASC""",
+
+                jr5="""INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
+
+                jr6="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s'
+                                         WHERE `client_id` = '%s'
+                                         AND `mapname` = '%s'
+                                         AND `way_id` = '%d'""",
+
+                jr7="""DELETE FROM `jumpruns`
+                              WHERE `client_id` = '%s'
+                              AND `mapname` = '%s'""",
+
+                jw1="""SELECT * FROM `jumpways`
+                                WHERE `mapname` = '%s'
+                                AND `way_id` = `%d`""",
+
+                jw2="""INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
+
+                jw3="""UPDATE `jumpways` SET `way_name` = '%s'
+                                         WHERE `mapname` = '%s'
+                                         AND `way_id` = '%d'""",)
 
     def __init__(self, console, config=None):
         """
@@ -218,10 +252,10 @@ class JumperPlugin(b3.plugin.Plugin):
         tm = self.console.time()
 
         # check if the client made his personal record on this map and this way
-        cursor = self.console.storage.query(self._sql['q1'] % (cl.id, mp, wi))
+        cursor = self.console.storage.query(self._sql['jr1'] % (cl.id, mp, wi))
         if cursor.EOF:
             # no record saved for this client on this map in this way_id
-            self.console.storage.query(self._sql['q5'] % (cl.id, mp, wi, wt, tm, tm, dm))
+            self.console.storage.query(self._sql['jr5'] % (cl.id, mp, wi, wt, tm, tm, dm))
             self.verbose("stored new jumprun for client %s [ mapname : %s | way_id : %d ]" % (cl.id, mp, wi))
             cursor.close()
             return True
@@ -232,7 +266,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 # remove previous stored demo
                 self.unLinkDemo(r['demo'])
 
-            self.console.storage.query(self._sql['q6'] % (wt, tm, dm, cl.id, mp, wi))
+            self.console.storage.query(self._sql['jr6'] % (wt, tm, dm, cl.id, mp, wi))
             self.verbose("updated jumprun for client %s [ mapname : %s | way_id : %d ]" % (cl.id, mp, wi))
             cursor.close()
             return True
@@ -250,7 +284,7 @@ class JumperPlugin(b3.plugin.Plugin):
         wt = int(event.data['way_time'])
 
         # check if the client made an absolute record on this map on the specified way_id
-        cursor = self.console.storage.query(self._sql['q2'] % (mp, wi, wt))
+        cursor = self.console.storage.query(self._sql['jr2'] % (mp, wi, wt))
 
         if cursor.EOF:
             cursor.close()
@@ -463,7 +497,7 @@ class JumperPlugin(b3.plugin.Plugin):
         Display the current map record(s)
         """
         mp = self.console.game.mapName
-        cu = self.console.storage.query(self._sql['q3'] % (mp, mp))
+        cu = self.console.storage.query(self._sql['jr3'] % (mp, mp))
 
         if cu.EOF:
             cmd.sayLoudOrPM(client, '^7No record found on ^3%s' % mp)
@@ -503,7 +537,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 return
 
         mp = self.console.game.mapName
-        cu = self.console.storage.query(self._sql['q4'] % (cl.id, mp))
+        cu = self.console.storage.query(self._sql['jr4'] % (cl.id, mp))
 
         if cu.EOF:
             client.message('^7No record found for %s on ^3%s' % (cl.name, mp))
@@ -523,7 +557,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cu.close()
 
         # removing database tuples for the given client
-        self.console.storage.query(self._sql['q7'] % (cl.id, mp))
+        self.console.storage.query(self._sql['jr7'] % (cl.id, mp))
         self.verbose('removed %d record%s for %s[@%s] on %s' % (num, 's' if num > 1 else '', cl.name, cl.id, mp))
         client.message('^7Removed ^1%d ^7record%s for %s on ^3%s' % (num, 's' if num > 1 else '', cl.name, mp))
 
@@ -586,3 +620,34 @@ class JumperPlugin(b3.plugin.Plugin):
 
         if l > 0:
             cmd.sayLoudOrPM(client, '^3Level: ^7%d^3/^7100' % l)
+
+    def cmd_jmpsetway(self, data, client, cmd=None):
+        """\
+        <way-id> <name> - Set a name for the speficied way id
+        """
+        if not data:
+            client.message('Invalid data. Try ^3!^7help jmpsetway')
+            return
+
+        # parsing user input
+        match = self._setWayNameRegEx.match(data)
+        if not match:
+            client.message('Invalid data. Try ^3!^7help jmpsetway')
+            return
+
+        wi = int(match.group('way_id'))
+        wn = match.group('way_name')
+
+        mp = self.console.game.mapName
+        cu = self.console.storage.query(self._sql['jw1'] % (mp, wi))
+
+        if cu.EOF:
+            # new entry for this way_id on this map
+            self.console.storage.query(self._sql['jw2'] % (mp, wi, wn))
+            client.message('^7Added alias for way ^3%d^7: ^2%s' % (wi, wn))
+        else:
+            # update old entry with the new name
+            self.console.storage.query(self._sql['jw3'] % (wn, mp, wi))
+            client.message('^7Updated alias for way ^3%d^7: ^2%s' % (wi, wn))
+
+        cu.close()
