@@ -51,18 +51,38 @@ class JumperPlugin(b3.plugin.Plugin):
                                 AND `way_id` = '%d'
                                 AND `way_time` < '%d'""",
 
-                jr3="""SELECT * FROM `jumpruns`
-                                WHERE `mapname` = '%s'
-                                AND `way_time` IN
-                                (SELECT MIN(`way_time`) FROM `jumpruns`
-                                                        WHERE `mapname` =  '%s'
-                                                        GROUP BY `way_id`)
-                                ORDER BY `way_id` ASC""",
+                jr3="""SELECT `cl`.`name` AS `name`,
+                              `jr`.`way_id` AS `way_id`,
+                              `jr`.`way_time` AS `way_time`,
+                              `jr`.`time_edit` AS `time_edit`,
+                              `jw`.`way_name` AS `way_name`
+                              FROM `clients` AS `cl`
+                              INNER JOIN `jumpruns` AS `jr`
+                              ON `cl`.`id` = `jr`.`client_id`
+                              LEFT OUTER JOIN `jumpways` AS `jw`
+                              ON `jr`.`way_id` =  `jw`.`way_id`
+                              AND `jr`.`mapname` =  `jw`.`mapname`
+                              WHERE `jr`.`mapname` = '%s'
+                              AND `jr`.`way_time`
+                              IN (
+                                  SELECT MIN(`way_time`)
+                                  FROM `jumpruns`
+                                  WHERE `mapname` = '%s'
+                                  GROUP BY  `way_id`)
+                              ORDER BY  `jr`.`way_id` ASC """,
 
-                jr4="""SELECT * FROM `jumpruns`
-                                WHERE `client_id` = '%s'
-                                AND `mapname` = '%s'
-                                ORDER BY `way_id` ASC""",
+                jr4="""SELECT `jr`.`way_id` AS `way_id`,
+                              `jr`.`way_time` AS `way_time`,
+                              `jr`.`time_edit` AS `time_edit`,
+                              `jr`.`demo` AS `demo`,
+                              `jw`.`way_name` AS `way_name`
+                              FROM  `jumpruns` AS `jr`
+                              LEFT OUTER JOIN  `jumpways` AS `jw`
+                              ON  `jr`.`way_id` = `jw`.`way_id`
+                              AND `jr`.`mapname` = `jw`.`mapname`
+                              WHERE `jr`.`client_id` =  '%s'
+                              AND `jr`.`mapname` = '%s'
+                              ORDER BY `jr`.`way_id` ASC""",
 
                 jr5="""INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
 
@@ -77,7 +97,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
                 jw1="""SELECT * FROM `jumpways`
                                 WHERE `mapname` = '%s'
-                                AND `way_id` = `%d`""",
+                                AND `way_id` = '%d'""",
 
                 jw2="""INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
 
@@ -472,7 +492,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 return
 
         mp = self.console.game.mapName
-        cu = self.console.storage.query(self._sql['q4'] % (cl.id, mp))
+        cu = self.console.storage.query(self._sql['jr4'] % (cl.id, mp))
 
         if cu.EOF:
             cmd.sayLoudOrPM(client, '^7No record found for %s on ^3%s' % (cl.name, mp))
@@ -484,7 +504,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         while not cu.EOF:
             rw = cu.getRow()
-            wi = rw['way_id']
+            wi = rw['way_name'] if rw['way_name'] else rw['way_id']
             tm = self.getTimeString(int(rw['way_time']))
             dt = self.getDateString(int(rw['time_edit']))
             cmd.sayLoudOrPM(client, '^7[^3%s^7] ^2%s ^7since ^3%s' % (wi, tm, dt))
@@ -509,13 +529,10 @@ class JumperPlugin(b3.plugin.Plugin):
 
         while not cu.EOF:
             rw = cu.getRow()
-            cl = self._adminPlugin.findClientPrompt('@%s' % rw['client_id'])
-            if not cl:
-                continue
-
-            wi = rw['way_id']
+            nm = rw['name']
+            wi = rw['way_name'] if rw['way_name'] else rw['way_id']
             tm = self.getTimeString(int(rw['way_time']))
-            cmd.sayLoudOrPM(client, '^7[^3%s^7] %s with ^2%s' % (wi, cl.name, tm))
+            cmd.sayLoudOrPM(client, '^7[^3%s^7] %s with ^2%s' % (wi, nm, tm))
             cu.moveNext()
 
         cu.close()
