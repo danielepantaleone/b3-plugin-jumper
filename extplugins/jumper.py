@@ -22,6 +22,7 @@ __version__ = '2.4.1'
 import b3
 import b3.plugin
 import b3.events
+import ConfigParser
 import urllib2
 import json
 import time
@@ -118,21 +119,23 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         Load plugin configuration
         """
-        self.verbose('Loading configuration file...')
-
         try:
             self._demoRecord = self.config.getboolean('settings', 'demorecord')
             self.debug('loaded automatic demo record: %r' % self._demoRecord)
-        except Exception, e:
-            self.error('could not load automatic demo record setting: %s' % e)
-            self.debug('using default value for automatic demo record setting: %r' % self._demoRecord)
+        except ConfigParser.NoOptionError:
+            self.warning('could not find settings/demorecord in config file, using default: %s' % self._demoRecord)
+        except ValueError, e:
+            self.error('could not load settings/demorecord config value: %s' % e)
+            self.debug('using default value (%s) for settings/demorecord' % self._demoRecord)
 
         try:
             self._minLevelDelete = self.config.getint('settings', 'minleveldelete')
             self.debug('loaded minimum level delete: %d' % self._minLevelDelete)
-        except Exception, e:
-            self.error('could not load minimum level delete setting: %s' % e)
-            self.debug('using default value for minimum level delete setting: %d' % self._minLevelDelete)
+        except ConfigParser.NoOptionError:
+            self.warning('could not find settings/minleveldelete in config file, using default: %s' % self._minLevelDelete)
+        except ValueError, e:
+            self.error('could not load settings/minleveldelete config value: %s' % e)
+            self.debug('using default value (%s) for settings/minleveldelete' % self._minLevelDelete)
 
     def onStartup(self):
         """\
@@ -164,6 +167,9 @@ class JumperPlugin(b3.plugin.Plugin):
         self.registerEvent(b3.events.EVT_CLIENT_TEAM_CHANGE)
         self.registerEvent(b3.events.EVT_CLIENT_DISCONNECT)
         self.registerEvent(b3.events.EVT_GAME_ROUND_START)
+
+        # notice plugin startup
+        self.debug('plugin started')
 
     # ######################################################################################### #
     # ##################################### HANDLE EVENTS ##################################### #        
