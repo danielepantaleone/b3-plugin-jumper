@@ -329,9 +329,9 @@ class JumperPlugin(b3.plugin.Plugin):
 
             try:
                 self.console.game.fs_game = self.console.getCvar('fs_game').getString().rstrip('/')
-                self.debug('retrieved CVAR fs_game : %s' % self.console.game.fs_game)
+                self.debug('retrieved CVAR [fs_game] : %s' % self.console.game.fs_game)
             except Exception, e:
-                self.warning('could not retrieve CVAR fs_game : %s' % e)
+                self.warning('could not retrieve CVAR [fs_game] : %s' % e)
                 self.console.game.fs_game = None
                 return
 
@@ -339,9 +339,9 @@ class JumperPlugin(b3.plugin.Plugin):
 
             try:
                 self.console.game.fs_basepath = self.console.getCvar('fs_basepath').getString().rstrip('/')
-                self.debug('retrieved CVAR fs_basepath : %s' % self.console.game.fs_game)
+                self.debug('retrieved CVAR [fs_basepath] : %s' % self.console.game.fs_game)
             except Exception, e:
-                self.warning('could not retrieve CVAR fs_basepath : %s' % e)
+                self.warning('could not retrieve CVAR [fs_basepath] : %s' % e)
                 self.console.game.fs_basepath = None
 
         # construct a possible demo filepath where to search the demo which is going to be deleted
@@ -353,9 +353,9 @@ class JumperPlugin(b3.plugin.Plugin):
 
                 try:
                     self.console.game.fs_homepath = self.console.getCvar('fs_homepath').getString().rstrip('/')
-                    self.debug('retrieved CVAR[fs_homepath]: %s' % self.console.game.fs_game)
+                    self.debug('retrieved CVAR [fs_homepath] : %s' % self.console.game.fs_game)
                 except Exception, e:
-                    self.warning('could not retrieve CVAR[fs_homepath]: %s' % e)
+                    self.warning('could not retrieve CVAR [fs_homepath] : %s' % e)
                     self.console.game.fs_homepath = None
 
             # construct a possible demo filepath where to search the demo which is going to be deleted
@@ -363,7 +363,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         if not os.path.isfile(demopath):
             self.debug('could not find demo file at %s' % demopath)
-            self.error('could not delete demo file. File not found!')
+            self.error('could not delete demo file: file not found!')
             return
 
         try:
@@ -398,7 +398,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 cl.setvar(self, 'demoname', demoname)
             else:
                 # something went wrong while retrieving the demo filename
-                self.warning("could not retrieve demo filename for client %s[@%s]: %s" % (cl.name, cl.id, response))
+                self.warning("could not retrieve demo filename for client %s <@%s>: %s" % (cl.name, cl.id, response))
 
     def onJumpRunCancel(self, event):
         """\
