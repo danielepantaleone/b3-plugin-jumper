@@ -437,11 +437,12 @@ class JumperPlugin(b3.plugin.Plugin):
         tm = self.getTimeString(int(event.data['way_time']))
 
         if self.isMapRecord(event):
+            # we established a new map record...gg ^_^
             self.console.say('^7%s established a new ^1map record^7!' % cl.name)
-            self.console.say('^4%s ^3[way:^7%d^3] ^7| ^2%s' % (mp, wi, tm))
-        else:
-            cl.message('^7You established a new ^3personal record ^7on this map!')
-            cl.message('^4%s ^3[way:^7%d^3] ^7| ^2%s' % (mp, wi, tm))
+            return
+
+        # not a map record but at least is our new personal record
+        cl.message('^7You established a new ^3personal record ^7on this map!')
 
     def onRoundStart(self):
         """\
@@ -621,7 +622,7 @@ class JumperPlugin(b3.plugin.Plugin):
             cmd.sayLoudOrPM(client, 'Could not find info for map ^1%s' % mp)
             return
 
-        # Fetch informations
+        # fetch informations
         n = self._mapData[mp]['nom']
         a = self._mapData[mp]['mapper']
         d = self._mapData[mp]['mdate']
