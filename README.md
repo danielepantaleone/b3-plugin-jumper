@@ -30,10 +30,11 @@ Because of that both b3 and the UrT needs to be executed by the same OS user (so
 
 ## In-game user guide
 
-* **!record [client]** *Display the record(s) of a client on the current map*
-* **!delrecord [client]** *Remove current map client record(s) from the storage*
-* **!maprecord** *Display the current map record(s)*
-* **!mapinfo [mapname]** *Display the current map information (thanks UrTJumpers community)*
+* **!jmprecord [client]** *Display the record(s) of a client on the current map*
+* **!jmpdelrecord [client]** *Remove current map client record(s) from the storage*
+* **!jmpmaprecord** *Display the current map record(s)*
+* **!jmpmapinfo [mapname]** *Display the current map information (thanks UrTJumpers community)*
+* **!jmpsetway [way-id] [name]** *Set a name for the speficied way id*
 
 ## Support
 
