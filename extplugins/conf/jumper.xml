@@ -1,10 +1,29 @@
 <configuration plugin="jumper">
     <settings name="commands">
-        <set name='jmprecord-record'>0</set>
-        <set name='jmpmaprecord-maprecord'>0</set>
-        <set name='jmpdelrecord-delrecord'>0</set>
-        <set name='jmpmapinfo-mapinfo'>0</set>
-        <set name='jmpsetway-setway'>100</set>
+        <set name="jmprecord-record">0</set>
+        <set name="jmpmaprecord-maprecord">0</set>
+        <set name="jmpdelrecord-delrecord">0</set>
+        <set name="jmpmapinfo-mapinfo">0</set>
+        <set name="jmpsetway-setway">100</set>
+    </settings>
+    <settings name="messages">
+        <set name="map_record_established">^7%(client)s established a new ^1map record^7!</set>
+        <set name="personal_record_established">^7You established a new ^3personal record ^7on this map!</set>
+        <set name="client_record_unknown">^7No record found for %(client)s on ^3%(mapname)s</set>
+        <set name="client_record_header">^7Listing record%(plural)s for %(client)s on ^3%(mapname)s^7:</set>
+        <set name="client_record_pattern">^7[^3%(way)s^7] ^2(time)%s ^7since ^3%(date)s</set>
+        <set name="map_record_unknown">^7No record found on ^3%(mapname)s</set>
+        <set name="map_record_header">^7Listing record%(plural)s on ^3%(mapname)s^7:</set>
+        <set name="map_record_pattern">^7[^3%(way)s^7] %(client)s with ^2%(time)s</set>
+        <set name="record_delete_denied">^7You can't delete ^1%(client)s ^7record(s)</set>
+        <set name="mapinfo_failed">^7Could not fetch data from the API</set>
+        <set name="mapinfo_empty">^7Could not find info for map ^1%(mapname)s</set>
+        <set name="mapinfo_author_unknown">^3I don't know who created ^7%(mapname)s</set>
+        <set name="mapinfo_author">^7%(mapname)s ^3has been created by ^7%(author)s</set>
+        <set name="mapinfo_released">^3It has been released on ^7%(date)s</set>
+        <set name="mapinfo_ways">^3It's composed of ^7%(way)d ^3way%(plural)s</set>
+        <set name="mapinfo_jump_ways">^3It's composed of ^7%(jumps)s ^3jumps and ^7%(way)d ^3way%(plural)s</set>
+        <set name="mapinfo_level">^3Level: ^7%(level)d^3/^7100</set>
     </settings>
     <settings name="settings">
         <set name="demorecord">yes</set>       <!-- specify whether to record a demo on every jump run attempt [default = yes]-->
