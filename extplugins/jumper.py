@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.5'
+__version__ = '2.5.1'
 
 import b3
 import b3.plugin
@@ -464,7 +464,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         if self.isMapRecord(event):
             # we established a new map record...gg ^_^
-            self.console.say(self._messages['map_record_established'] % cl.name)
+            self.console.say(self._messages['map_record_established'] % {'client': cl.name})
             return
 
         # not a map record but at least is our new personal record
@@ -530,19 +530,21 @@ class JumperPlugin(b3.plugin.Plugin):
         cu = self.console.storage.query(self._sql['jr4'] % (cl.id, mp))
 
         if cu.EOF:
-            cmd.sayLoudOrPM(client, self._messages['client_record_unknown'] % (cl.name, mp))
+            cmd.sayLoudOrPM(client, self._messages['client_record_unknown'] % {'client': cl.name, 'mapname': mp})
             cu.close()
             return
 
         # print a sort of a list header so players will know what's going on
-        cmd.sayLoudOrPM(client, self._messages['client_record_header'] % ('s' if cu.rowcount > 1 else '', cl.name, mp))
+        cmd.sayLoudOrPM(client, self._messages['client_record_header'] % {'plural': 's' if cu.rowcount > 1 else '',
+                                                                          'client': cl.name,
+                                                                          'mapname': mp})
 
         while not cu.EOF:
             rw = cu.getRow()
             wi = rw['way_name'] if rw['way_name'] else rw['way_id']
             tm = self.getTimeString(int(rw['way_time']))
             dt = self.getDateString(int(rw['time_edit']))
-            cmd.sayLoudOrPM(client, self._messages['client_record_pattern'] % (wi, tm, dt))
+            cmd.sayLoudOrPM(client, self._messages['client_record_pattern'] % {'way': wi, 'time': tm, 'date': dt})
             cu.moveNext()
 
         cu.close()
@@ -555,19 +557,20 @@ class JumperPlugin(b3.plugin.Plugin):
         cu = self.console.storage.query(self._sql['jr3'] % (mp, mp))
 
         if cu.EOF:
-            cmd.sayLoudOrPM(client, self._messages['map_record_unknown'] % mp)
+            cmd.sayLoudOrPM(client, self._messages['map_record_unknown'] % {'mapname': mp})
             cu.close()
             return
 
         # print a sort of a list header so players will know what's going on
-        cmd.sayLoudOrPM(client, self._messages['map_record_header'] % ('s' if cu.rowcount > 1 else '', mp))
+        cmd.sayLoudOrPM(client, self._messages['map_record_header'] % {'plural': 's' if cu.rowcount > 1 else '',
+                                                                       'mapname': mp})
 
         while not cu.EOF:
             rw = cu.getRow()
             nm = rw['name']
             wi = rw['way_name'] if rw['way_name'] else rw['way_id']
             tm = self.getTimeString(int(rw['way_time']))
-            cmd.sayLoudOrPM(client, self._messages['map_record_pattern'] % (wi, nm, tm))
+            cmd.sayLoudOrPM(client, self._messages['map_record_pattern'] % {'way': wi, 'client': nm, 'time': tm})
             cu.moveNext()
 
         cu.close()
@@ -585,7 +588,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         if cl != client:
             if client.maxLevel < self._minLevelDelete or client.maxLevel < cl.maxLevel:
-                client.message(self._messages['record_delete_denied'] % cl.name)
+                client.message(self._messages['record_delete_denied'] % {'client': cl.name})
                 return
 
         mp = self.console.game.mapName
@@ -645,7 +648,7 @@ class JumperPlugin(b3.plugin.Plugin):
         mp = mp.lower()
 
         if mp not in self._mapData:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_empty'] % mp)
+            cmd.sayLoudOrPM(client, self._messages['mapinfo_empty'] % {'mapname': mp})
             return
 
         # fetch informations
@@ -658,20 +661,22 @@ class JumperPlugin(b3.plugin.Plugin):
         w = int(self._mapData[mp]['nway'])
 
         if not a:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_author_unknown'] % n)
+            cmd.sayLoudOrPM(client, self._messages['mapinfo_author_unknown'] % {'mapname': n})
         else:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_author'] % (n, a))
+            cmd.sayLoudOrPM(client, self._messages['mapinfo_author'] % {'mapname': n, 'author': a})
 
         # we always know when the map has been released
-        cmd.sayLoudOrPM(client, self._messages['mapinfo_released'] % self.getDateString(t))
+        cmd.sayLoudOrPM(client, self._messages['mapinfo_released'] % {'date': self.getDateString(t)})
 
         if not j:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_ways'] % (w, 's' if w > 1 else ' only'))
+            cmd.sayLoudOrPM(client, self._messages['mapinfo_ways'] % {'way': w, 'plural': 's' if w > 1 else ' only'})
         else:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_jump_ways'] % (j, w, 's' if w > 1 else ''))
+            cmd.sayLoudOrPM(client, self._messages['mapinfo_jump_ways'] % {'jumps': j,
+                                                                           'way': w,
+                                                                           'plural': 's' if w > 1 else ''})
 
         if l > 0:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_level'] % l)
+            cmd.sayLoudOrPM(client, self._messages['mapinfo_level'] % {'level': l})
 
     def cmd_jmpsetway(self, data, client, cmd=None):
         """\
