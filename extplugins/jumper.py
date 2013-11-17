@@ -17,19 +17,18 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.5.1'
+__version__ = '2.5.2'
 
 import b3
 import b3.plugin
 import b3.events
-import ConfigParser
 import urllib2
 import json
 import time
 import datetime
 import os
 import re
-
+from ConfigParser import NoOptionError
 
 class JumperPlugin(b3.plugin.Plugin):
 
@@ -143,7 +142,7 @@ class JumperPlugin(b3.plugin.Plugin):
         try:
             self._demoRecord = self.config.getboolean('settings', 'demorecord')
             self.debug('loaded automatic demo record: %r' % self._demoRecord)
-        except ConfigParser.NoOptionError:
+        except NoOptionError:
             self.warning('could not find settings/demorecord in config file, using default: %s' % self._demoRecord)
         except ValueError, e:
             self.error('could not load settings/demorecord config value: %s' % e)
@@ -152,7 +151,7 @@ class JumperPlugin(b3.plugin.Plugin):
         try:
             self._minLevelDelete = self.config.getint('settings', 'minleveldelete')
             self.debug('loaded minimum level delete: %d' % self._minLevelDelete)
-        except ConfigParser.NoOptionError:
+        except NoOptionError:
             self.warning('could not find settings/minleveldelete in config file, using default: %s' % self._minLevelDelete)
         except ValueError, e:
             self.error('could not load settings/minleveldelete config value: %s' % e)
