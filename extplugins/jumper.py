@@ -36,7 +36,7 @@ class JumperPlugin(b3.plugin.Plugin):
     _adminPlugin = None
 
     _mapData = {}
-    _demoRecord = False
+    _demoRecord = True
     _minLevelDelete = 80
 
     _demoRecordRegEx = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
