@@ -16,8 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-__author__ = 'Fenix - http://www.urbanterror.info'
-__version__ = '2.5.2'
+__author__ = 'Fenix'
+__version__ = '2.6'
 
 import b3
 import b3.plugin
@@ -29,6 +29,7 @@ import datetime
 import os
 import re
 from ConfigParser import NoOptionError
+
 
 class JumperPlugin(b3.plugin.Plugin):
 
