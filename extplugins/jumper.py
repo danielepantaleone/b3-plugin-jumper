@@ -14,7 +14,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 __author__ = 'Fenix'
 __version__ = '2.6'
@@ -274,7 +274,7 @@ class JumperPlugin(b3.plugin.Plugin):
         Retrieve map info from UrTJumpers API
         """
         mapdata = {}
-        self.debug("contacting http://api.urtjumpers.com to retrieve necessary data...")
+        self.debug('contacting http://api.urtjumpers.com to retrieve maps data...')
 
         try:
 
@@ -284,10 +284,10 @@ class JumperPlugin(b3.plugin.Plugin):
                 mapdata[data['pk3'].lower()] = data
 
         except urllib2.URLError, e:
-            self.warning("could not connect to http://api.urtjumpers.com: %s" % e)
+            self.warning('could not connect to http://api.urtjumpers.com: %s' % e)
             return {}
 
-        self.debug("retrieved %d maps from http://api.urtjumpers.com" % len(mapdata))
+        self.debug('retrieved %d maps from http://api.urtjumpers.com' % len(mapdata))
         return mapdata
 
     def getMapsFromListSoundingLike(self, mapname):
@@ -330,7 +330,7 @@ class JumperPlugin(b3.plugin.Plugin):
         if cursor.EOF:
             # no record saved for this client on this map in this way_id
             self.console.storage.query(self._sql['jr5'] % (cl.id, mp, wi, wt, tm, tm, dm))
-            self.verbose("stored new jumprun for client %s [ mapname : %s | way_id : %d ]" % (cl.id, mp, wi))
+            self.verbose('stored new jumprun for client %s [ mapname : %s | way_id : %d ]' % (cl.id, mp, wi))
             cursor.close()
             return True
 
@@ -341,7 +341,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 self.unLinkDemo(r['demo'])
 
             self.console.storage.query(self._sql['jr6'] % (wt, tm, dm, cl.id, mp, wi))
-            self.verbose("updated jumprun for client %s [ mapname : %s | way_id : %d ]" % (cl.id, mp, wi))
+            self.verbose('updated jumprun for client %s [ mapname : %s | way_id : %d ]' % (cl.id, mp, wi))
             cursor.close()
             return True
 
@@ -426,10 +426,11 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         cl = event.client
 
+        # remove previously started demo, if any
         if self._demoRecord and cl.var(self, 'jumprun').value \
                 and cl.var(self, 'demoname').value is not None:
 
-            self.console.write('stopserverdemo %s' % (cl.cid))
+            self.console.write('stopserverdemo %s' % cl.cid)
             self.unLinkDemo(cl.var(self, 'demoname').value)
 
         cl.setvar(self, 'jumprun', True)
@@ -455,7 +456,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         if self._demoRecord and cl.var(self, 'demoname').value is not None:
             # stop the server side demo of this client
-            self.console.write('stopserverdemo %s' % (cl.cid))
+            self.console.write('stopserverdemo %s' % cl.cid)
             self.unLinkDemo(cl.var(self, 'demoname').value)
 
     def onJumpRunStop(self, event):
@@ -477,10 +478,6 @@ class JumperPlugin(b3.plugin.Plugin):
                 cl.setvar(self, 'demoname', None)
 
             return
-
-        mp = self.console.game.mapName
-        wi = int(event.data['way_id'])
-        tm = self.getTimeString(int(event.data['way_time']))
 
         if self.isMapRecord(event):
             # we established a new map record...gg ^_^
