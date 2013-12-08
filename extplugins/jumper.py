@@ -37,10 +37,21 @@ class JumperPlugin(b3.plugin.Plugin):
 
     _mapData = {}
     _demoRecord = True
+    _skipStandardMaps = True
     _minLevelDelete = 80
 
+    _cycleCount = 0
+    _maxCycleCount = 5
     _demoRecordRegEx = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
-    _setWayNameRegEx = re.compile(r"""^(?P<way_id>\d+) (?P<way_name>.+)$""");
+    _setWayNameRegEx = re.compile(r"""^(?P<way_id>\d+) (?P<way_name>.+)$""")
+
+    _standardMaplist = ['ut4_abbey', 'ut4_abbeyctf', 'ut4_algiers', 'ut4_ambush', 'ut4_austria', 'ut4_bohemia',
+                        'ut4_casa', 'ut4_cascade', 'ut4_commune', 'ut4_company', 'ut4_crossing', 'ut4_docks',
+                        'ut4_dressingroom', 'ut4_eagle', 'ut4_elgin', 'ut4_firingrange', 'ut4_ghosttown_rc4',
+                        'ut4_harbortown', 'ut4_herring', 'ut4_horror', 'ut4_kingdom', 'ut4_kingpin', 'ut4_mandolin',
+                        'ut4_maya', 'ut4_oildepot', 'ut4_prague', 'ut4_prague_v2', 'ut4_raiders', 'ut4_ramelle',
+                        'ut4_ricochet', 'ut4_riyadh', 'ut4_sanc', 'ut4_snoppis', 'ut4_suburbs', 'ut4_subway',
+                        'ut4_swim', 'ut4_thingley', 'ut4_tombs', 'ut4_toxic', 'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
 
     _messages = dict(
         map_record_established="""^7%(client)s established a new ^1map record^7!""",
@@ -142,7 +153,7 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         try:
             self._demoRecord = self.config.getboolean('settings', 'demorecord')
-            self.debug('loaded automatic demo record: %r' % self._demoRecord)
+            self.debug('loaded settings/demorecord: %s' % self._demoRecord)
         except NoOptionError:
             self.warning('could not find settings/demorecord in config file, using default: %s' % self._demoRecord)
         except ValueError, e:
@@ -150,8 +161,17 @@ class JumperPlugin(b3.plugin.Plugin):
             self.debug('using default value (%s) for settings/demorecord' % self._demoRecord)
 
         try:
+            self._skipStandardMaps = self.config.getboolean('settings', 'skipstandardmaps')
+            self.debug('loaded settings/skipstandardmaps: %s' % self._skipStandardMaps)
+        except NoOptionError:
+            self.warning('could not find settings/skipstandardmaps in config file, using default: %s' % self._skipStandardMaps)
+        except ValueError, e:
+            self.error('could not load settings/skipstandardmaps config value: %s' % e)
+            self.debug('using default value (%s) for settings/skipstandardmaps' % self._skipStandardMaps)
+
+        try:
             self._minLevelDelete = self.config.getint('settings', 'minleveldelete')
-            self.debug('loaded minimum level delete: %d' % self._minLevelDelete)
+            self.debug('loaded settings/minleveldelete: %d' % self._minLevelDelete)
         except NoOptionError:
             self.warning('could not find settings/minleveldelete in config file, using default: %s' % self._minLevelDelete)
         except ValueError, e:
@@ -474,6 +494,8 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         Handle EVT_GAME_ROUND_START
         """
+        # remove all the demo files, no matter if this map
+        # is going to be cycled because being a non-jump one.
         for cl in self.console.clients.getList():
             if self._demoRecord and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
@@ -482,8 +504,27 @@ class JumperPlugin(b3.plugin.Plugin):
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'jumprun', False)
 
-        # refresh map informations
-        self._mapData = self.getMapInfo()
+        if self._skipStandardMaps:
+            # checking if a non-jump map is being played
+            # will check only among the standard map list
+            mapname = self.console.game.mapName
+            if mapname in self._standardMaplist:
+                # endless loop protection
+                if self._cycleCount < self._maxCycleCount:
+                    # we'll not print anything to the game chat because no
+                    # one will be able to notice a message: map loading takes time
+                    self._cycleCount += 1
+                    self.debug('map [%s] is currently being played: cycling current map...')
+                    self.console.write('cyclemap')
+                    return
+                else:
+                    # we should have cycled this map but too many consequent cyclemap
+                    # has been issued: this should never happen unless some idiots keep
+                    # voting for standard maps. However I'll handle this in another plugin
+                    self.debug('map [%s] is currently being played: endless loop protection aborted cyclemap...')
+
+        self._cycleCount = 0
+        self._mapData = self.getMapData()
 
     def onDisconnect(self, event):
         """\

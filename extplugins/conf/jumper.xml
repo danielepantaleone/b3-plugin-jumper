@@ -27,7 +27,7 @@
     </settings>
     <settings name="settings">
         <set name="demorecord">yes</set>       <!-- specify whether to record a demo on every jump run attempt [default = yes] -->
-        <set name="minleveldelete">80</set>    <!-- clients with this level and above will be able to delete other client's records [default = 80] -->
         <set name="skipstandardmaps">yes</set> <!-- if set to yes, standard maps will be cycled [default = yes] -->
+        <set name="minleveldelete">80</set>    <!-- clients with this level and above will be able to delete other client's records [default = 80] -->
     </settings>
 </configuration>
