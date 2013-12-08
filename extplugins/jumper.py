@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 __author__ = 'Fenix'
-__version__ = '2.6'
+__version__ = '2.7'
 
 import b3
 import b3.plugin
@@ -98,8 +98,7 @@ class JumperPlugin(b3.plugin.Plugin):
                       AND `jr`.`mapname` =  `jw`.`mapname`
                       WHERE `jr`.`mapname` = '%s'
                       AND `jr`.`way_time`
-                      IN (
-                          SELECT MIN(`way_time`)
+                      IN (SELECT MIN(`way_time`)
                           FROM `jumpruns`
                           WHERE `mapname` = '%s'
                           GROUP BY  `way_id`)
