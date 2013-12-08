@@ -180,7 +180,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         # load in-game messages
         for msg in self.config.options('messages'):
-            self._message[msg] = self.config.getint('settings', msg)
+            self._messages[msg] = self.config.get('messages', msg)
             self.debug('loaded message [%s] : %s' % (msg, self._messages[msg]))
 
     def onStartup(self):
