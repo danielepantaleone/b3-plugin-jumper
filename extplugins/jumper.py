@@ -35,13 +35,14 @@ class JumperPlugin(b3.plugin.Plugin):
 
     _adminPlugin = None
 
-    _mapData = {}
+    _mapData = dict()
     _demoRecord = True
     _skipStandardMaps = True
     _minLevelDelete = 80
 
     _cycleCount = 0
     _maxCycleCount = 5
+    _eventHandle = dict()
     _demoRecordRegEx = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
     _setWayNameRegEx = re.compile(r"""^(?P<way_id>\d+) (?P<way_name>.+)$""")
 
@@ -214,6 +215,14 @@ class JumperPlugin(b3.plugin.Plugin):
         self.registerEvent(b3.events.EVT_CLIENT_DISCONNECT)
         self.registerEvent(b3.events.EVT_GAME_ROUND_START)
 
+        # map event on specific functions
+        self._eventHandle[b3.events.EVT_CLIENT_JUMP_RUN_START] = self.onJumpRunStart
+        self._eventHandle[b3.events.EVT_CLIENT_JUMP_RUN_STOP] = self.onJumpRunStop
+        self._eventHandle[b3.events.EVT_CLIENT_JUMP_RUN_CANCEL] = self.onJumpRunCancel
+        self._eventHandle[b3.events.EVT_CLIENT_TEAM_CHANGE] = self.onTeamChange
+        self._eventHandle[b3.events.EVT_CLIENT_DISCONNECT] = self.onDisconnect
+        self._eventHandle[b3.events.EVT_GAME_ROUND_START] = self.onRoundStart
+
         # notice plugin startup
         self.debug('plugin started')
 
@@ -225,18 +234,8 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         Handle intercepted events
         """
-        if event.type == b3.events.EVT_CLIENT_JUMP_RUN_START:
-            self.onJumpRunStart(event)
-        elif event.type == b3.events.EVT_CLIENT_JUMP_RUN_CANCEL:
-            self.onJumpRunCancel(event)
-        elif event.type == b3.events.EVT_CLIENT_JUMP_RUN_STOP:
-            self.onJumpRunStop(event)
-        elif event.type == b3.events.EVT_CLIENT_DISCONNECT:
-            self.onDisconnect(event)
-        elif event.type == b3.events.EVT_CLIENT_TEAM_CHANGE:
-            self.onTeamChange(event)
-        elif event.type == b3.events.EVT_GAME_ROUND_START:
-            self.onRoundStart()
+        if event.type in self._eventHandle.keys():
+            self._eventHandle[event.type](event)
 
     # ######################################################################################### #
     # ####################################### FUNCTIONS ####################################### #
@@ -487,7 +486,7 @@ class JumperPlugin(b3.plugin.Plugin):
         # not a map record but at least is our new personal record
         cl.message(self._messages['personal_record_established'])
 
-    def onRoundStart(self):
+    def onRoundStart(self, event):
         """\
         Handle EVT_GAME_ROUND_START
         """
