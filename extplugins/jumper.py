@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 __author__ = 'Fenix'
-__version__ = '2.7'
+__version__ = '2.8'
 
 import b3
 import b3.plugin
@@ -42,7 +42,6 @@ class JumperPlugin(b3.plugin.Plugin):
 
     _cycleCount = 0
     _maxCycleCount = 5
-    _eventHandle = dict()
     _demoRecordRegEx = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
     _setWayNameRegEx = re.compile(r"""^(?P<way_id>\d+) (?P<way_name>.+)$""")
 
@@ -207,20 +206,12 @@ class JumperPlugin(b3.plugin.Plugin):
                     self._adminPlugin.registerCommand(self, cmd, level, func, alias)
 
         # register the events needed
-        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_START)
-        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_STOP)
-        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_CANCEL)
-        self.registerEvent(b3.events.EVT_CLIENT_TEAM_CHANGE)
-        self.registerEvent(b3.events.EVT_CLIENT_DISCONNECT)
-        self.registerEvent(b3.events.EVT_GAME_ROUND_START)
-
-        # map event on specific functions
-        self._eventHandle[b3.events.EVT_CLIENT_JUMP_RUN_START] = self.onJumpRunStart
-        self._eventHandle[b3.events.EVT_CLIENT_JUMP_RUN_STOP] = self.onJumpRunStop
-        self._eventHandle[b3.events.EVT_CLIENT_JUMP_RUN_CANCEL] = self.onJumpRunCancel
-        self._eventHandle[b3.events.EVT_CLIENT_TEAM_CHANGE] = self.onTeamChange
-        self._eventHandle[b3.events.EVT_CLIENT_DISCONNECT] = self.onDisconnect
-        self._eventHandle[b3.events.EVT_GAME_ROUND_START] = self.onRoundStart
+        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_START, self.onJumpRunStart)
+        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_STOP, self.onJumpRunStop)
+        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_CANCEL, self.onJumpRunCancel)
+        self.registerEvent(b3.events.EVT_CLIENT_TEAM_CHANGE, self.onTeamChange)
+        self.registerEvent(b3.events.EVT_CLIENT_DISCONNECT, self.onDisconnect)
+        self.registerEvent(b3.events.EVT_GAME_ROUND_START, self.onRoundStart)
 
         # notice plugin startup
         self.debug('plugin started')
@@ -229,12 +220,134 @@ class JumperPlugin(b3.plugin.Plugin):
     # ##################################### HANDLE EVENTS ##################################### #        
     # ######################################################################################### #    
 
-    def onEvent(self, event):
+    def onJumpRunStart(self, event):
         """\
-        Handle intercepted events
+        Handle EVT_CLIENT_JUMP_RUN_START
         """
-        if event.type in self._eventHandle.keys():
-            self._eventHandle[event.type](event)
+        cl = event.client
+
+        # remove previously started demo, if any
+        if self._demoRecord and cl.var(self, 'jumprun').value \
+                and cl.var(self, 'demoname').value is not None:
+
+            self.console.write('stopserverdemo %s' % cl.cid)
+            self.unLinkDemo(cl.var(self, 'demoname').value)
+
+        cl.setvar(self, 'jumprun', True)
+
+        # if we are suppose to record a demo of the jumprun
+        # start it and store the demo name in the client object
+        if self._demoRecord:
+            response = self.console.write('startserverdemo %s' % cl.cid)
+            match = self._demoRecordRegEx.match(response)
+            if match:
+                demoname = match.group('file')
+                cl.setvar(self, 'demoname', demoname)
+            else:
+                # something went wrong while retrieving the demo filename
+                self.warning("could not retrieve demo filename for client %s <@%s>: %s" % (cl.name, cl.id, response))
+
+    def onJumpRunCancel(self, event):
+        """\
+        Handle EVT_CLIENT_JUMP_RUN_CANCEL
+        """
+        cl = event.client
+        cl.setvar(self, 'jumprun', False)
+
+        if self._demoRecord and cl.var(self, 'demoname').value is not None:
+            # stop the server side demo of this client
+            self.console.write('stopserverdemo %s' % cl.cid)
+            self.unLinkDemo(cl.var(self, 'demoname').value)
+
+    def onJumpRunStop(self, event):
+        """\
+        Handle EVT_CLIENT_JUMP_RUN_STOP
+        """
+        cl = event.client
+        cl.setvar(self, 'jumprun', False)
+
+        if self._demoRecord:
+            # stop the server side demo of this client
+            self.console.write('stopserverdemo %s' % cl.cid)
+
+        if not self.isPersonalRecord(event):
+            cl.message('^7You can do better! Try again!')
+            # if we were recording a server demo, delete the file
+            if self._demoRecord and cl.var(self, 'demoname').value is not None:
+                self.unLinkDemo(cl.var(self, 'demoname').value)
+                cl.setvar(self, 'demoname', None)
+
+            return
+
+        if self.isMapRecord(event):
+            # we established a new map record...gg ^_^
+            self.console.say(self._messages['map_record_established'] % {'client': cl.name})
+            return
+
+        # not a map record but at least is our new personal record
+        cl.message(self._messages['personal_record_established'])
+
+    def onRoundStart(self, event):
+        """\
+        Handle EVT_GAME_ROUND_START
+        """
+        # remove all the demo files, no matter if this map
+        # is going to be cycled because being a non-jump one.
+        for cl in self.console.clients.getList():
+            if self._demoRecord and cl.var(self, 'jumprun').value \
+                    and cl.var(self, 'demoname').value is not None:
+
+                self.console.write('stopserverdemo %s' % cl.cid)
+                self.unLinkDemo(cl.var(self, 'demoname').value)
+                cl.setvar(self, 'jumprun', False)
+
+        if self._skipStandardMaps:
+            # checking if a non-jump map is being played
+            # will check only among the standard map list
+            mapname = self.console.game.mapName
+            if mapname in self._standardMaplist:
+                # endless loop protection
+                if self._cycleCount < self._maxCycleCount:
+                    # we'll not print anything to the game chat because no
+                    # one will be able to notice a message: map loading takes time
+                    self._cycleCount += 1
+                    self.debug('map [%s] is currently being played: cycling current map...')
+                    self.console.write('cyclemap')
+                    return
+                else:
+                    # we should have cycled this map but too many consequent cyclemap
+                    # has been issued: this should never happen unless some idiots keep
+                    # voting for standard maps. However I'll handle this in another plugin
+                    self.debug('map [%s] is currently being played: endless loop protection aborted cyclemap...')
+
+        self._cycleCount = 0
+        self._mapData = self.getMapData()
+
+    def onDisconnect(self, event):
+        """\
+        Handle EVT_CLIENT_DISCONNECT
+        """
+        cl = event.client
+        if self._demoRecord and cl.var(self, 'jumprun').value \
+                and cl.var(self, 'demoname').value is not None:
+
+            # remove the demo file if we got one since the client
+            # has disconnected from the server and we don't need it
+            self.unLinkDemo(cl.var(self, 'demoname').value)
+
+    def onTeamChange(self, event):
+        """\
+        Handle EVT_CLIENT_TEAM_CHANGE
+        """
+        if event.data == b3.TEAM_SPEC:
+
+            cl = event.client
+            if self._demoRecord and cl.var(self, 'jumprun').value \
+                    and cl.var(self, 'demoname').value is not None:
+
+                self.console.write('stopserverdemo %s' % cl.cid)
+                self.unLinkDemo(cl.var(self, 'demoname').value)
+                cl.setvar(self, 'jumprun', False)
 
     # ######################################################################################### #
     # ####################################### FUNCTIONS ####################################### #
@@ -417,135 +530,6 @@ class JumperPlugin(b3.plugin.Plugin):
             # when this happen is mostly a problem related to user permissions
             # log it as an error so the user will notice and change is configuration
             self.error("could not remove file: %s | [%d] %s" % (demopath, errno, errstr))
-
-    def onJumpRunStart(self, event):
-        """\
-        Handle EVT_CLIENT_JUMP_RUN_START
-        """
-        cl = event.client
-
-        # remove previously started demo, if any
-        if self._demoRecord and cl.var(self, 'jumprun').value \
-                and cl.var(self, 'demoname').value is not None:
-
-            self.console.write('stopserverdemo %s' % cl.cid)
-            self.unLinkDemo(cl.var(self, 'demoname').value)
-
-        cl.setvar(self, 'jumprun', True)
-
-        # if we are suppose to record a demo of the jumprun
-        # start it and store the demo name in the client object
-        if self._demoRecord:
-            response = self.console.write('startserverdemo %s' % cl.cid)
-            match = self._demoRecordRegEx.match(response)
-            if match:
-                demoname = match.group('file')
-                cl.setvar(self, 'demoname', demoname)
-            else:
-                # something went wrong while retrieving the demo filename
-                self.warning("could not retrieve demo filename for client %s <@%s>: %s" % (cl.name, cl.id, response))
-
-    def onJumpRunCancel(self, event):
-        """\
-        Handle EVT_CLIENT_JUMP_RUN_CANCEL
-        """
-        cl = event.client
-        cl.setvar(self, 'jumprun', False)
-
-        if self._demoRecord and cl.var(self, 'demoname').value is not None:
-            # stop the server side demo of this client
-            self.console.write('stopserverdemo %s' % cl.cid)
-            self.unLinkDemo(cl.var(self, 'demoname').value)
-
-    def onJumpRunStop(self, event):
-        """\
-        Handle EVT_CLIENT_JUMP_RUN_STOP
-        """
-        cl = event.client
-        cl.setvar(self, 'jumprun', False)
-
-        if self._demoRecord:
-            # stop the server side demo of this client
-            self.console.write('stopserverdemo %s' % cl.cid)
-
-        if not self.isPersonalRecord(event):
-            cl.message('^7You can do better! Try again!')
-            # if we were recording a server demo, delete the file
-            if self._demoRecord and cl.var(self, 'demoname').value is not None:
-                self.unLinkDemo(cl.var(self, 'demoname').value)
-                cl.setvar(self, 'demoname', None)
-
-            return
-
-        if self.isMapRecord(event):
-            # we established a new map record...gg ^_^
-            self.console.say(self._messages['map_record_established'] % {'client': cl.name})
-            return
-
-        # not a map record but at least is our new personal record
-        cl.message(self._messages['personal_record_established'])
-
-    def onRoundStart(self, event):
-        """\
-        Handle EVT_GAME_ROUND_START
-        """
-        # remove all the demo files, no matter if this map
-        # is going to be cycled because being a non-jump one.
-        for cl in self.console.clients.getList():
-            if self._demoRecord and cl.var(self, 'jumprun').value \
-                    and cl.var(self, 'demoname').value is not None:
-
-                self.console.write('stopserverdemo %s' % cl.cid)
-                self.unLinkDemo(cl.var(self, 'demoname').value)
-                cl.setvar(self, 'jumprun', False)
-
-        if self._skipStandardMaps:
-            # checking if a non-jump map is being played
-            # will check only among the standard map list
-            mapname = self.console.game.mapName
-            if mapname in self._standardMaplist:
-                # endless loop protection
-                if self._cycleCount < self._maxCycleCount:
-                    # we'll not print anything to the game chat because no
-                    # one will be able to notice a message: map loading takes time
-                    self._cycleCount += 1
-                    self.debug('map [%s] is currently being played: cycling current map...')
-                    self.console.write('cyclemap')
-                    return
-                else:
-                    # we should have cycled this map but too many consequent cyclemap
-                    # has been issued: this should never happen unless some idiots keep
-                    # voting for standard maps. However I'll handle this in another plugin
-                    self.debug('map [%s] is currently being played: endless loop protection aborted cyclemap...')
-
-        self._cycleCount = 0
-        self._mapData = self.getMapData()
-
-    def onDisconnect(self, event):
-        """\
-        Handle EVT_CLIENT_DISCONNECT
-        """
-        cl = event.client
-        if self._demoRecord and cl.var(self, 'jumprun').value \
-                and cl.var(self, 'demoname').value is not None:
-
-            # remove the demo file if we got one since the client
-            # has disconnected from the server and we don't need it
-            self.unLinkDemo(cl.var(self, 'demoname').value)
-
-    def onTeamChange(self, event):
-        """\
-        Handle EVT_CLIENT_TEAM_CHANGE
-        """
-        if event.data == b3.TEAM_SPEC:
-
-            cl = event.client
-            if self._demoRecord and cl.var(self, 'jumprun').value \
-                    and cl.var(self, 'demoname').value is not None:
-
-                self.console.write('stopserverdemo %s' % cl.cid)
-                self.unLinkDemo(cl.var(self, 'demoname').value)
-                cl.setvar(self, 'jumprun', False)
 
     # ######################################################################################### #
     # ######################################## COMMANDS ####################################### #        
