@@ -277,6 +277,14 @@ class JumperPlugin(b3.plugin.Plugin):
         Handle EVT_CLIENT_JUMP_RUN_STOP
         """
         cl = event.client
+
+        if not cl.isvar(self, 'jumprun') or not cl.var(self, 'jumprun').value:
+            # double check that we started recording this client correctly:
+            # if b3 gets restarted meanwhile a jumprun is being recorded
+            # we'll have no 'jumprun' variable in the client object
+            return
+
+        # set the jumprun stop flag
         cl.setvar(self, 'jumprun', False)
 
         if self._demoRecord:
