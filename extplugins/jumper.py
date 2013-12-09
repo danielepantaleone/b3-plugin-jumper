@@ -216,6 +216,19 @@ class JumperPlugin(b3.plugin.Plugin):
         # notice plugin startup
         self.debug('plugin started')
 
+    def onDisable(self):
+        """\
+        Called when the plugin is disabled
+        """
+        # remove all the demo files
+        for cl in self.console.clients.getList():
+            if self._demoRecord and cl.var(self, 'jumprun').value \
+                    and cl.var(self, 'demoname').value is not None:
+
+                self.console.write('stopserverdemo %s' % cl.cid)
+                self.unLinkDemo(cl.var(self, 'demoname').value)
+                cl.setvar(self, 'jumprun', False)
+
     # ######################################################################################### #
     # ##################################### HANDLE EVENTS ##################################### #        
     # ######################################################################################### #    
