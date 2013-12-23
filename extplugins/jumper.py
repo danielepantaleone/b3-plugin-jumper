@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 __author__ = 'Fenix'
-__version__ = '2.8'
+__version__ = '2.9'
 
 import b3
 import b3.plugin
@@ -63,7 +63,7 @@ class JumperPlugin(b3.plugin.Plugin):
         map_record_header="""^7Listing record%(plural)s on ^3%(mapname)s^7:""",
         map_record_pattern="""^7[^3%(way)s^7] %(client)s with ^2%(time)s""",
         record_delete_denied="""^7You can't delete ^1%(client)s ^7record(s)""",
-        mapinfo_failed="""^7Could not fetch data from the API""",
+        mapinfo_failed="""^7Could not contact api to get map data""",
         mapinfo_empty="""^7Could not find info for map ^1%(mapname)s""",
         mapinfo_author_unknown="""^3I don't know who created ^7%(mapname)s""",
         mapinfo_author="""^7%(mapname)s ^3has been created by ^7%(author)s""",
