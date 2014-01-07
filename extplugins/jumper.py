@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 __author__ = 'Fenix'
-__version__ = '2.9'
+__version__ = '2.10'
 
 import b3
 import b3.plugin
@@ -58,7 +58,7 @@ class JumperPlugin(b3.plugin.Plugin):
         personal_record_established="""^7You established a new ^3personal record ^7on this map!""",
         client_record_unknown="""^7No record found for %(client)s on ^3%(mapname)s""",
         client_record_header="""^7Listing record%(plural)s for %(client)s on ^3%(mapname)s^7:""",
-        client_record_pattern="""^7[^3%(way)s^7] ^2(time)%s ^7since ^3%(date)s""",
+        client_record_pattern="""^7[^3%(way)s^7] ^2%(time)s ^7since ^3%(date)s""",
         map_record_unknown="""^7No record found on ^3%(mapname)s""",
         map_record_header="""^7Listing record%(plural)s on ^3%(mapname)s^7:""",
         map_record_pattern="""^7[^3%(way)s^7] %(client)s with ^2%(time)s""",
