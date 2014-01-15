@@ -156,6 +156,9 @@ class JumperPlugin(b3.plugin.Plugin):
             record_delete_denied='''^7You can't delete ^1$client ^7records''',
         )
 
+        # commands override
+        self._adminPlugin.cmd_maps = self.cmd_maps
+
     def onLoadConfig(self):
         """\
         Load plugin configuration
@@ -767,3 +770,34 @@ class JumperPlugin(b3.plugin.Plugin):
             client.message('^7Updated alias for way ^3%d^7: ^2%s' % (wi, wn))
 
         cu.close()
+
+    ####################################################################################################################
+    ##                                                                                                                ##
+    ##   COMMANDS OVERRIDE                                                                                            ##
+    ##                                                                                                                ##
+    ####################################################################################################################
+
+    def cmd_maps(self, data, client=None, cmd=None):
+        """\
+        List the server map rotation
+        """
+        if not self._adminPlugin.aquireCmdLock(cmd, client, 60, True):
+            client.message('^7Do not spam commands')
+            return
+
+        maps = self.console.getMaps()
+        if maps is None:
+            client.message('^7Error: could not get map list')
+            return
+
+        if not len(maps):
+            cmd.sayLoudOrPM(client, '^7Map Rotation list is empty')
+            return
+
+        if self._skip_standard_maps:
+            for m in maps:
+                if m not in self._standard_maplist:
+                    maps.remove(m)
+
+        cmd.sayLoudOrPM(client, '^7Map Rotation: ^3%s' % '^7, ^3'.join(maps))
+        return
