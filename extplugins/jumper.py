@@ -344,23 +344,19 @@ class JumperPlugin(b3.plugin.Plugin):
                 cl.setvar(self, 'jumprun', False)
 
         if self._skip_standard_maps:
-            # checking if a non-jump map is being played
-            # will check only among the standard map list
             mapname = self.console.game.mapName
             if mapname in self._standard_maplist:
                 # endless loop protection
                 if self._cycle_count < self._max_cycle_count:
-                    # we'll not print anything to the game chat because no
-                    # one will be able to notice a message: map loading takes time
                     self._cycle_count += 1
-                    self.debug('map [%s] is currently being played: cycling current map...')
+                    self.debug('built-in map detected: cycling map %s...' % mapname)
                     self.console.write('cyclemap')
                     return
-                else:
-                    # we should have cycled this map but too many consequent cyclemap
-                    # has been issued: this should never happen unless some idiots keep
-                    # voting for standard maps. However I'll handle this in another plugin
-                    self.debug('map [%s] is currently being played: endless loop protection aborted cyclemap...')
+
+                # we should have cycled this map but too many consequent cyclemap
+                # has been issued: this should never happen unless some idiots keep
+                # voting for standard maps. However I'll handle this in another plugin
+                self.debug('built-in map detected: could not cycle map %s due to endless loop protection...' % mapname)
 
         self._cycle_count = 0
         self._map_data = self.getMapData()
