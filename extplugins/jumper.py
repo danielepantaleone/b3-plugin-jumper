@@ -34,6 +34,7 @@ from ConfigParser import NoOptionError
 class JumperPlugin(b3.plugin.Plugin):
 
     _adminPlugin = None
+    _poweradminurtPlugin = None
 
     _map_data = dict()
     _demo_record = True
@@ -197,6 +198,9 @@ class JumperPlugin(b3.plugin.Plugin):
             self.error('could not find admin plugin')
             return False
 
+        # get the poweradminurt plugin
+        self._poweradminurtPlugin = self.console.getPlugin('poweradminurt')
+
         # register our commands
         if 'commands' in self.config.sections():
             for cmd in self.config.options('commands'):
@@ -221,6 +225,9 @@ class JumperPlugin(b3.plugin.Plugin):
         # commands override
         self._adminPlugin.cmd_maps = self.cmd_maps
         self._adminPlugin.cmd_map = self.cmd_map
+
+        if self._poweradminurtPlugin:
+            self._poweradminurtPlugin.cmd_pasetnextmap = self.cmd_pasetnextmap
 
         # notice plugin startup
         self.debug('plugin started')
@@ -800,6 +807,35 @@ class JumperPlugin(b3.plugin.Plugin):
         self.say('^7Changing map to ^3%s' % match)
         time.sleep(1)
         self.write('map %s' % match)
+
+    def cmd_pasetnextmap(self, data, client=None, cmd=None):
+        """\
+        <mapname> - Set the nextmap (partial map name works)
+        """
+        if not data:
+            client.message('Missing data. Try ^3!^7help pasetnextmap')
+            return
+
+        match = self.console.getMapsSoundingLike(data)
+        if isinstance(match, list):
+            client.message('do you mean: ^3%s ?' % '^7, ^3'.join(match[:5]))
+            return
+
+        if isinstance(match, basestring):
+            if self._skip_standard_maps:
+                if match in self._standard_maplist:
+                    client.message('^7Could not set nextmap to ^1%s' % match)
+                    client.message('^7Built-in maps are forbidden on this server')
+                    return
+
+            self.console.setCvar('g_nextmap', match)
+            if client:
+                client.message('^7nextmap set to ^3%s' % match)
+
+            return
+
+        # no map found
+        client.message('^7could not find any map matching ^1%s' % data)
 
     def cmd_maps(self, data, client=None, cmd=None):
         """\
