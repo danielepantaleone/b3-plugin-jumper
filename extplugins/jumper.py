@@ -794,19 +794,24 @@ class JumperPlugin(b3.plugin.Plugin):
             return
 
         match = self.console.getMapsSoundingLike(data)
-        if not isinstance(match, basestring):
+        if isinstance(match, list):
             client.message('do you mean: ^3%s ?' % '^7, ^3'.join(match[:5]))
             return
 
-        if self._skip_standard_maps:
-            if match in self._standard_maplist:
-                client.message('^7Could not switch map to ^1%s' % match)
-                client.message('^7Built-in maps are forbidden on this server')
-                return
+        if isinstance(match, basestring):
+            if self._skip_standard_maps:
+                if match in self._standard_maplist:
+                    client.message('^7Could not switch map to ^1%s' % match)
+                    client.message('^7Built-in maps are forbidden on this server')
+                    return
 
-        self.say('^7Changing map to ^3%s' % match)
-        time.sleep(1)
-        self.write('map %s' % match)
+            self.say('^7Changing map to ^3%s' % match)
+            time.sleep(1)
+            self.write('map %s' % match)
+            return
+
+        # no map found
+        client.message('^7could not find any map matching ^1%s' % data)
 
     def cmd_pasetnextmap(self, data, client=None, cmd=None):
         """\
