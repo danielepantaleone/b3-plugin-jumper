@@ -35,23 +35,24 @@ class JumperPlugin(b3.plugin.Plugin):
 
     _adminPlugin = None
 
-    _mapData = dict()
-    _demoRecord = True
-    _skipStandardMaps = True
-    _minLevelDelete = 80
+    _map_data = dict()
+    _demo_record = True
+    _skip_standard_maps = True
+    _min_level_delete = 80
 
-    _cycleCount = 0
-    _maxCycleCount = 5
-    _demoRecordRegEx = re.compile(r"""^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$""")
-    _setWayNameRegEx = re.compile(r"""^(?P<way_id>\d+) (?P<way_name>.+)$""")
+    _cycle_count = 0
+    _max_cycle_count = 5
+    _demo_record_regex = re.compile(r'''^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$''')
+    _set_way_name_regex = re.compile(r'''^(?P<way_id>\d+) (?P<way_name>.+)$''')
 
-    _standardMaplist = ['ut4_abbey', 'ut4_abbeyctf', 'ut4_algiers', 'ut4_ambush', 'ut4_austria', 'ut4_bohemia',
-                        'ut4_casa', 'ut4_cascade', 'ut4_commune', 'ut4_company', 'ut4_crossing', 'ut4_docks',
-                        'ut4_dressingroom', 'ut4_eagle', 'ut4_elgin', 'ut4_firingrange', 'ut4_ghosttown_rc4',
-                        'ut4_harbortown', 'ut4_herring', 'ut4_horror', 'ut4_kingdom', 'ut4_kingpin', 'ut4_mandolin',
-                        'ut4_maya', 'ut4_oildepot', 'ut4_prague', 'ut4_prague_v2', 'ut4_raiders', 'ut4_ramelle',
-                        'ut4_ricochet', 'ut4_riyadh', 'ut4_sanc', 'ut4_snoppis', 'ut4_suburbs', 'ut4_subway',
-                        'ut4_swim', 'ut4_thingley', 'ut4_tombs', 'ut4_toxic', 'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
+    _standard_maplist = ['ut4_abbey', 'ut4_abbeyctf', 'ut4_algiers', 'ut4_ambush', 'ut4_austria',
+                         'ut4_bohemia', 'ut4_casa', 'ut4_cascade', 'ut4_commune', 'ut4_company', 'ut4_crossing',
+                         'ut4_docks', 'ut4_dressingroom', 'ut4_eagle', 'ut4_elgin', 'ut4_firingrange',
+                         'ut4_ghosttown_rc4', 'ut4_harbortown', 'ut4_herring', 'ut4_horror', 'ut4_kingdom',
+                         'ut4_kingpin', 'ut4_mandolin', 'ut4_maya', 'ut4_oildepot', 'ut4_prague', 'ut4_prague_v2',
+                         'ut4_raiders', 'ut4_ramelle', 'ut4_ricochet', 'ut4_riyadh', 'ut4_sanc', 'ut4_snoppis',
+                         'ut4_suburbs', 'ut4_subway', 'ut4_swim', 'ut4_thingley', 'ut4_tombs', 'ut4_toxic',
+                         'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
 
     _sql = dict(
         jr1="""SELECT * FROM `jumpruns`
@@ -118,6 +119,12 @@ class JumperPlugin(b3.plugin.Plugin):
                                  AND `way_id` = '%d'"""
     )
 
+    ####################################################################################################################
+    ##                                                                                                                ##
+    ##   STARTUP                                                                                                      ##
+    ##                                                                                                                ##
+    ####################################################################################################################
+
     def __init__(self, console, config=None):
         """
         Build the plugin object
@@ -154,34 +161,34 @@ class JumperPlugin(b3.plugin.Plugin):
         Load plugin configuration
         """
         try:
-            self._demoRecord = self.config.getboolean('settings', 'demorecord')
-            self.debug('loaded settings/demorecord: %s' % self._demoRecord)
+            self._demo_record = self.config.getboolean('settings', 'demorecord')
+            self.debug('loaded settings/demorecord: %s' % self._demo_record)
         except NoOptionError:
             self.warning('could not find settings/demorecord in config file, '
-                         'using default: %s' % self._demoRecord)
+                         'using default: %s' % self._demo_record)
         except ValueError, e:
             self.error('could not load settings/demorecord config value: %s' % e)
-            self.debug('using default value (%s) for settings/demorecord' % self._demoRecord)
+            self.debug('using default value (%s) for settings/demorecord' % self._demo_record)
 
         try:
-            self._skipStandardMaps = self.config.getboolean('settings', 'skipstandardmaps')
-            self.debug('loaded settings/skipstandardmaps: %s' % self._skipStandardMaps)
+            self._skip_standard_maps = self.config.getboolean('settings', 'skipstandardmaps')
+            self.debug('loaded settings/skipstandardmaps: %s' % self._skip_standard_maps)
         except NoOptionError:
             self.warning('could not find settings/skipstandardmaps in config file, '
-                         'using default: %s' % self._skipStandardMaps)
+                         'using default: %s' % self._skip_standard_maps)
         except ValueError, e:
             self.error('could not load settings/skipstandardmaps config value: %s' % e)
-            self.debug('using default value (%s) for settings/skipstandardmaps' % self._skipStandardMaps)
+            self.debug('using default value (%s) for settings/skipstandardmaps' % self._skip_standard_maps)
 
         try:
-            self._minLevelDelete = self.config.getint('settings', 'minleveldelete')
-            self.debug('loaded settings/minleveldelete: %d' % self._minLevelDelete)
+            self._min_level_delete = self.config.getint('settings', 'minleveldelete')
+            self.debug('loaded settings/minleveldelete: %d' % self._min_level_delete)
         except NoOptionError:
             self.warning('could not find settings/minleveldelete in config file, '
-                         'using default: %s' % self._minLevelDelete)
+                         'using default: %s' % self._min_level_delete)
         except ValueError, e:
             self.error('could not load settings/minleveldelete config value: %s' % e)
-            self.debug('using default value (%s) for settings/minleveldelete' % self._minLevelDelete)
+            self.debug('using default value (%s) for settings/minleveldelete' % self._min_level_delete)
 
     def onStartup(self):
         """\
@@ -223,16 +230,18 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         # remove all the demo files
         for cl in self.console.clients.getList():
-            if self._demoRecord and cl.var(self, 'jumprun').value \
+            if self._demo_record and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
 
                 self.console.write('stopserverdemo %s' % cl.cid)
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'jumprun', False)
 
-    # ######################################################################################### #
-    # ##################################### HANDLE EVENTS ##################################### #        
-    # ######################################################################################### #    
+    ####################################################################################################################
+    ##                                                                                                                ##
+    ##   EVENTS                                                                                                       ##
+    ##                                                                                                                ##
+    ####################################################################################################################
 
     def onJumpRunStart(self, event):
         """\
@@ -241,7 +250,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cl = event.client
 
         # remove previously started demo, if any
-        if self._demoRecord and cl.var(self, 'jumprun').value \
+        if self._demo_record and cl.var(self, 'jumprun').value \
                 and cl.var(self, 'demoname').value is not None:
 
             self.console.write('stopserverdemo %s' % cl.cid)
@@ -251,9 +260,9 @@ class JumperPlugin(b3.plugin.Plugin):
 
         # if we are suppose to record a demo of the jumprun
         # start it and store the demo name in the client object
-        if self._demoRecord:
+        if self._demo_record:
             response = self.console.write('startserverdemo %s' % cl.cid)
-            match = self._demoRecordRegEx.match(response)
+            match = self._demo_record_regex.match(response)
             if match:
                 demoname = match.group('file')
                 cl.setvar(self, 'demoname', demoname)
@@ -268,7 +277,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cl = event.client
         cl.setvar(self, 'jumprun', False)
 
-        if self._demoRecord and cl.var(self, 'demoname').value is not None:
+        if self._demo_record and cl.var(self, 'demoname').value is not None:
             # stop the server side demo of this client
             self.console.write('stopserverdemo %s' % cl.cid)
             self.unLinkDemo(cl.var(self, 'demoname').value)
@@ -288,14 +297,14 @@ class JumperPlugin(b3.plugin.Plugin):
         # set the jumprun stop flag
         cl.setvar(self, 'jumprun', False)
 
-        if self._demoRecord:
+        if self._demo_record:
             # stop the server side demo of this client
             self.console.write('stopserverdemo %s' % cl.cid)
 
         if not self.isPersonalRecord(event):
             cl.message(self.getMessage('personal_record_failed'))
             # if we were recording a server demo, delete the file
-            if self._demoRecord and cl.var(self, 'demoname').value is not None:
+            if self._demo_record and cl.var(self, 'demoname').value is not None:
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'demoname', None)
 
@@ -315,23 +324,23 @@ class JumperPlugin(b3.plugin.Plugin):
         # remove all the demo files, no matter if this map
         # is going to be cycled because being a non-jump one.
         for cl in self.console.clients.getList():
-            if self._demoRecord and cl.var(self, 'jumprun').value \
+            if self._demo_record and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
 
                 self.console.write('stopserverdemo %s' % cl.cid)
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'jumprun', False)
 
-        if self._skipStandardMaps:
+        if self._skip_standard_maps:
             # checking if a non-jump map is being played
             # will check only among the standard map list
             mapname = self.console.game.mapName
-            if mapname in self._standardMaplist:
+            if mapname in self._standard_maplist:
                 # endless loop protection
-                if self._cycleCount < self._maxCycleCount:
+                if self._cycle_count < self._max_cycle_count:
                     # we'll not print anything to the game chat because no
                     # one will be able to notice a message: map loading takes time
-                    self._cycleCount += 1
+                    self._cycle_count += 1
                     self.debug('map [%s] is currently being played: cycling current map...')
                     self.console.write('cyclemap')
                     return
@@ -341,15 +350,15 @@ class JumperPlugin(b3.plugin.Plugin):
                     # voting for standard maps. However I'll handle this in another plugin
                     self.debug('map [%s] is currently being played: endless loop protection aborted cyclemap...')
 
-        self._cycleCount = 0
-        self._mapData = self.getMapData()
+        self._cycle_count = 0
+        self._map_data = self.getMapData()
 
     def onDisconnect(self, event):
         """\
         Handle EVT_CLIENT_DISCONNECT
         """
         cl = event.client
-        if self._demoRecord and cl.var(self, 'jumprun').value \
+        if self._demo_record and cl.var(self, 'jumprun').value \
                 and cl.var(self, 'demoname').value is not None:
 
             # remove the demo file if we got one since the client
@@ -363,16 +372,18 @@ class JumperPlugin(b3.plugin.Plugin):
         if event.data == b3.TEAM_SPEC:
 
             cl = event.client
-            if self._demoRecord and cl.var(self, 'jumprun').value \
+            if self._demo_record and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
 
                 self.console.write('stopserverdemo %s' % cl.cid)
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'jumprun', False)
 
-    # ######################################################################################### #
-    # ####################################### FUNCTIONS ####################################### #
-    # ######################################################################################### #
+    ####################################################################################################################
+    ##                                                                                                                ##
+    ##   FUNCTIONS                                                                                                    ##
+    ##                                                                                                                ##
+    ####################################################################################################################
 
     def getCmd(self, cmd):
         cmd = 'cmd_%s' % cmd
@@ -431,12 +442,12 @@ class JumperPlugin(b3.plugin.Plugin):
         mapname = mapname.lower()
 
         # check exact match at first
-        if mapname in self._mapData.keys():
+        if mapname in self._map_data.keys():
             matches.append(mapname)
             return matches
 
         # check for substring match
-        for key in self._mapData.keys():
+        for key in self._map_data.keys():
             if mapname in key:
                 matches.append(key)
 
@@ -550,9 +561,11 @@ class JumperPlugin(b3.plugin.Plugin):
             # when this happen is mostly a problem related to misconfiguration
             self.error("could not remove file: %s | [%d] %s" % (demopath, errno, errstr))
 
-    # ######################################################################################### #
-    # ######################################## COMMANDS ####################################### #        
-    # ######################################################################################### #
+    ####################################################################################################################
+    ##                                                                                                                ##
+    ##   COMMANDS                                                                                                     ##
+    ##                                                                                                                ##
+    ####################################################################################################################
 
     def cmd_jmprecord(self, data, client, cmd=None):
         """\
@@ -623,7 +636,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 return
 
         if cl != client:
-            if client.maxLevel < self._minLevelDelete or client.maxLevel < cl.maxLevel:
+            if client.maxLevel < self._min_level_delete or client.maxLevel < cl.maxLevel:
                 cmd.sayLoudOrPM(client, self.getMessage('record_delete_denied', {'client': cl.name}))
                 return
 
@@ -636,7 +649,7 @@ class JumperPlugin(b3.plugin.Plugin):
             return
 
         num = cu.rowcount
-        if self._demoRecord:
+        if self._demo_record:
             # removing old demo
             while not cu.EOF:
                 r = cu.getRow()
@@ -658,11 +671,11 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         [<mapname>] Display map specific informations
         """
-        if not self._mapData:
+        if not self._map_data:
             # retrieve data from the api
-            self._mapData = self.getMapData()
+            self._map_data = self.getMapData()
 
-        if not self._mapData:
+        if not self._map_data:
             cmd.sayLoudOrPM(client, self.getMessage('mapinfo_failed'))
             return
 
@@ -684,18 +697,18 @@ class JumperPlugin(b3.plugin.Plugin):
             mp = matches[0]
 
         mp = mp.lower()
-        if mp not in self._mapData:
+        if mp not in self._map_data:
             cmd.sayLoudOrPM(client, self.getMessage('mapinfo_empty', {'mapname': mp}))
             return
 
         # fetch informations
-        n = self._mapData[mp]['nom']
-        a = self._mapData[mp]['mapper']
-        d = self._mapData[mp]['mdate']
-        j = self._mapData[mp]['njump']
+        n = self._map_data[mp]['nom']
+        a = self._map_data[mp]['mapper']
+        d = self._map_data[mp]['mdate']
+        j = self._map_data[mp]['njump']
         t = int(datetime.datetime.strptime(d, '%Y-%m-%d').strftime('%s'))
-        l = int(self._mapData[mp]['level'])
-        w = int(self._mapData[mp]['nway'])
+        l = int(self._map_data[mp]['level'])
+        w = int(self._map_data[mp]['nway'])
 
         if not a:
             message = self.getMessage('mapinfo_author_unknown', {'mapname': n})
@@ -728,7 +741,7 @@ class JumperPlugin(b3.plugin.Plugin):
             return
 
         # parsing user input
-        match = self._setWayNameRegEx.match(data)
+        match = self._set_way_name_regex.match(data)
         if not match:
             client.message('Invalid data. Try ^3!^7help jmpsetway')
             return
