@@ -156,10 +156,6 @@ class JumperPlugin(b3.plugin.Plugin):
             record_delete_denied='''^7You can't delete ^1$client ^7records''',
         )
 
-        # commands override
-        self._adminPlugin.cmd_maps = self.cmd_maps
-        self._adminPlugin.cmd_map = self.cmd_map
-
     def onLoadConfig(self):
         """\
         Load plugin configuration
@@ -221,6 +217,10 @@ class JumperPlugin(b3.plugin.Plugin):
         self.registerEvent(b3.events.EVT_CLIENT_TEAM_CHANGE, self.onTeamChange)
         self.registerEvent(b3.events.EVT_CLIENT_DISCONNECT, self.onDisconnect)
         self.registerEvent(b3.events.EVT_GAME_ROUND_START, self.onRoundStart)
+
+        # commands override
+        self._adminPlugin.cmd_maps = self.cmd_maps
+        self._adminPlugin.cmd_map = self.cmd_map
 
         # notice plugin startup
         self.debug('plugin started')
