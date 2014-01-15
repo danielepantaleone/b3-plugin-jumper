@@ -862,7 +862,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         if self._skip_standard_maps:
             for m in maps:
-                if m not in self._standard_maplist:
+                if m in self._standard_maplist:
                     maps.remove(m)
 
         cmd.sayLoudOrPM(client, '^7Map Rotation: ^3%s' % '^7, ^3'.join(maps))
