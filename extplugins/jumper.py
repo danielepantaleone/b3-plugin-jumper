@@ -237,6 +237,18 @@ class JumperPlugin(b3.plugin.Plugin):
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'jumprun', False)
 
+    def onEnable(self):
+        """\
+        Called when the plugin is enabled
+        """
+        if self._skip_standard_maps:
+            mapname = self.console.game.mapName
+            if mapname in self._standard_maplist:
+                self._cycle_count += 1
+                self.console.say('^7Built-in map detected: cycling map ^3%s...' % mapname)
+                self.debug('built-in map detected: cycling map %s...' % mapname)
+                self.console.write('cyclemap')
+
     ####################################################################################################################
     ##                                                                                                                ##
     ##   EVENTS                                                                                                       ##
