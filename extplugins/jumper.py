@@ -134,7 +134,17 @@ class JumperPlugin(b3.plugin.Plugin):
         if self.console.gameName != 'iourt42':
             self.critical("unsupported game : %s" % self.console.gameName)
             raise SystemExit(220)
+        
+        # get the admin plugin
+        self._adminPlugin = self.console.getPlugin('admin')
+        if not self._adminPlugin:
+            self.critical('could not start without admin plugin')
+            raise SystemExit(220)
 
+        # get the poweradminurt plugin
+        self._poweradminurtPlugin = self.console.getPlugin('poweradminurt')
+        
+        # set default messages
         self._default_messages = dict(
             client_record_unknown='''^7No record found for ^3$client ^7on ^3$mapname''',
             client_record_deleted='''^7Removed ^3$num ^7record$plural for ^3$client ^7on ^3$mapname''',
@@ -156,7 +166,14 @@ class JumperPlugin(b3.plugin.Plugin):
             personal_record_established='''^7You established a new personal record on ^3$mapname7!''',
             record_delete_denied='''^7You can't delete ^1$client ^7records''',
         )
+        
+        # commands override
+        self._adminPlugin.cmd_maps = self.cmd_maps
+        self._adminPlugin.cmd_map = self.cmd_map
 
+        if self._poweradminurtPlugin:
+            self._poweradminurtPlugin.cmd_pasetnextmap = self.cmd_pasetnextmap
+     
     def onLoadConfig(self):
         """\
         Load plugin configuration
@@ -192,15 +209,6 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         Initialize plugin settings
         """
-        # get the admin plugin
-        self._adminPlugin = self.console.getPlugin('admin')
-        if not self._adminPlugin:
-            self.error('could not find admin plugin')
-            return False
-
-        # get the poweradminurt plugin
-        self._poweradminurtPlugin = self.console.getPlugin('poweradminurt')
-
         # register our commands
         if 'commands' in self.config.sections():
             for cmd in self.config.options('commands'):
@@ -221,13 +229,6 @@ class JumperPlugin(b3.plugin.Plugin):
         self.registerEvent(b3.events.EVT_CLIENT_TEAM_CHANGE, self.onTeamChange)
         self.registerEvent(b3.events.EVT_CLIENT_DISCONNECT, self.onDisconnect)
         self.registerEvent(b3.events.EVT_GAME_ROUND_START, self.onRoundStart)
-
-        # commands override
-        self._adminPlugin.cmd_maps = self.cmd_maps
-        self._adminPlugin.cmd_map = self.cmd_map
-
-        if self._poweradminurtPlugin:
-            self._poweradminurtPlugin.cmd_pasetnextmap = self.cmd_pasetnextmap
 
         # notice plugin startup
         self.debug('plugin started')
