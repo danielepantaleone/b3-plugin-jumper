@@ -53,26 +53,6 @@ class JumperPlugin(b3.plugin.Plugin):
                         'ut4_ricochet', 'ut4_riyadh', 'ut4_sanc', 'ut4_snoppis', 'ut4_suburbs', 'ut4_subway',
                         'ut4_swim', 'ut4_thingley', 'ut4_tombs', 'ut4_toxic', 'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
 
-    _messages = dict(
-        map_record_established="""^7%(client)s established a new ^1map record^7!""",
-        personal_record_established="""^7You established a new ^3personal record ^7on this map!""",
-        client_record_unknown="""^7No record found for %(client)s on ^3%(mapname)s""",
-        client_record_header="""^7Listing record%(plural)s for %(client)s on ^3%(mapname)s^7:""",
-        client_record_pattern="""^7[^3%(way)s^7] ^2%(time)s ^7since ^3%(date)s""",
-        map_record_unknown="""^7No record found on ^3%(mapname)s""",
-        map_record_header="""^7Listing record%(plural)s on ^3%(mapname)s^7:""",
-        map_record_pattern="""^7[^3%(way)s^7] %(client)s with ^2%(time)s""",
-        record_delete_denied="""^7You can't delete ^1%(client)s ^7record(s)""",
-        mapinfo_failed="""^7Could not contact api to get map data""",
-        mapinfo_empty="""^7Could not find info for map ^1%(mapname)s""",
-        mapinfo_author_unknown="""^3I don't know who created ^7%(mapname)s""",
-        mapinfo_author="""^7%(mapname)s ^3has been created by ^7%(author)s""",
-        mapinfo_released="""^3It has been released on ^7%(date)s""",
-        mapinfo_ways="""^3It's composed of ^7%(way)d ^3way%(plural)s""",
-        mapinfo_jump_ways="""^3It's composed of ^7%(jumps)s ^3jumps and ^7%(way)d ^3way%(plural)s""",
-        mapinfo_level="""^3Level: ^7%(level)d^3/^7100""",
-    )
-
     _sql = dict(
         jr1="""SELECT * FROM `jumpruns`
                         WHERE `client_id` = '%s'
@@ -135,7 +115,8 @@ class JumperPlugin(b3.plugin.Plugin):
 
         jw3="""UPDATE `jumpways` SET `way_name` = '%s'
                                  WHERE `mapname` = '%s'
-                                 AND `way_id` = '%d'""",)
+                                 AND `way_id` = '%d'"""
+    )
 
     def __init__(self, console, config=None):
         """
@@ -146,6 +127,28 @@ class JumperPlugin(b3.plugin.Plugin):
             self.critical("unsupported game : %s" % self.console.gameName)
             raise SystemExit(220)
 
+        self._default_messages = dict(
+            client_record_unknown='''^7No record found for ^3$client ^7on ^3$mapname''',
+            client_record_deleted='''^7Removed ^3$num ^7record$plural for ^3$client ^7on ^3$mapname''',
+            client_record_header='''^7Listing records for ^3$client ^7on ^3$mapname^7:''',
+            client_record_pattern='''^7[^3$way^7] ^2$time ^7since ^3$date''',
+            map_record_established='''^3$client ^7established a new map record^7!''',
+            map_record_unknown='''^7No record found on ^3$mapname''',
+            map_record_header='''^7Listing map records on ^3$mapname^7:''',
+            map_record_pattern='''^7[^3$way^7] ^3$client ^7with ^2$time''',
+            mapinfo_failed='''^7Could not query remote server to get map data''',
+            mapinfo_empty='''^7Could not find info for map ^1$mapname''',
+            mapinfo_author_unknown='''^7I don't know who created ^3$mapname''',
+            mapinfo_author='''^3$mapname ^7has been created by ^3$author''',
+            mapinfo_released='''^7It has been released on ^3$date''',
+            mapinfo_ways='''^7It's composed of ^3$way ^7way$plural''',
+            mapinfo_jump_ways='''^7It's composed of ^3$jumps ^7jumps and ^3$way ^7way$plural''',
+            mapinfo_level='''^7Level: ^3$level^7/^3100''',
+            personal_record_failed='''^7You can do better ^3$client^7...try again!''',
+            personal_record_established='''^7You established a new personal record on ^3$mapname7!''',
+            record_delete_denied='''^7You can't delete ^1$client ^7records''',
+        )
+
     def onLoadConfig(self):
         """\
         Load plugin configuration
@@ -154,7 +157,8 @@ class JumperPlugin(b3.plugin.Plugin):
             self._demoRecord = self.config.getboolean('settings', 'demorecord')
             self.debug('loaded settings/demorecord: %s' % self._demoRecord)
         except NoOptionError:
-            self.warning('could not find settings/demorecord in config file, using default: %s' % self._demoRecord)
+            self.warning('could not find settings/demorecord in config file, '
+                         'using default: %s' % self._demoRecord)
         except ValueError, e:
             self.error('could not load settings/demorecord config value: %s' % e)
             self.debug('using default value (%s) for settings/demorecord' % self._demoRecord)
@@ -163,7 +167,8 @@ class JumperPlugin(b3.plugin.Plugin):
             self._skipStandardMaps = self.config.getboolean('settings', 'skipstandardmaps')
             self.debug('loaded settings/skipstandardmaps: %s' % self._skipStandardMaps)
         except NoOptionError:
-            self.warning('could not find settings/skipstandardmaps in config file, using default: %s' % self._skipStandardMaps)
+            self.warning('could not find settings/skipstandardmaps in config file, '
+                         'using default: %s' % self._skipStandardMaps)
         except ValueError, e:
             self.error('could not load settings/skipstandardmaps config value: %s' % e)
             self.debug('using default value (%s) for settings/skipstandardmaps' % self._skipStandardMaps)
@@ -172,15 +177,11 @@ class JumperPlugin(b3.plugin.Plugin):
             self._minLevelDelete = self.config.getint('settings', 'minleveldelete')
             self.debug('loaded settings/minleveldelete: %d' % self._minLevelDelete)
         except NoOptionError:
-            self.warning('could not find settings/minleveldelete in config file, using default: %s' % self._minLevelDelete)
+            self.warning('could not find settings/minleveldelete in config file, '
+                         'using default: %s' % self._minLevelDelete)
         except ValueError, e:
             self.error('could not load settings/minleveldelete config value: %s' % e)
             self.debug('using default value (%s) for settings/minleveldelete' % self._minLevelDelete)
-
-        # load in-game messages
-        for msg in self.config.options('messages'):
-            self._messages[msg] = self.config.get('messages', msg)
-            self.debug('loaded message [%s] : %s' % (msg, self._messages[msg]))
 
     def onStartup(self):
         """\
@@ -292,7 +293,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.console.write('stopserverdemo %s' % cl.cid)
 
         if not self.isPersonalRecord(event):
-            cl.message('^7You can do better! Try again!')
+            cl.message(self.getMessage('personal_record_failed'))
             # if we were recording a server demo, delete the file
             if self._demoRecord and cl.var(self, 'demoname').value is not None:
                 self.unLinkDemo(cl.var(self, 'demoname').value)
@@ -301,12 +302,11 @@ class JumperPlugin(b3.plugin.Plugin):
             return
 
         if self.isMapRecord(event):
-            # we established a new map record...gg ^_^
-            self.console.say(self._messages['map_record_established'] % {'client': cl.name})
+            self.console.saybig(self.getMessage('map_record_established', {'client': cl.name}))
             return
 
         # not a map record but at least is our new personal record
-        cl.message(self._messages['personal_record_established'])
+        cl.message(self.getMessage('personal_record_established', {'mapname': self.console.game.mapName}))
 
     def onRoundStart(self, event):
         """\
@@ -443,7 +443,7 @@ class JumperPlugin(b3.plugin.Plugin):
         return matches
 
     def isPersonalRecord(self, event):
-        """
+        """\
         Return True if the client established his new personal record
         on this map and on the given way_id, False otherwise. The function will
         also update values in the database and perform some other operations
@@ -507,9 +507,9 @@ class JumperPlugin(b3.plugin.Plugin):
 
             try:
                 self.console.game.fs_game = self.console.getCvar('fs_game').getString().rstrip('/')
-                self.debug('retrieved CVAR [fs_game] : %s' % self.console.game.fs_game)
+                self.debug('retrieved CVAR <fs_game> : %s' % self.console.game.fs_game)
             except Exception, e:
-                self.warning('could not retrieve CVAR [fs_game] : %s' % e)
+                self.warning('could not retrieve CVAR <fs_game> : %s' % e)
                 self.console.game.fs_game = None
                 return
 
@@ -517,9 +517,9 @@ class JumperPlugin(b3.plugin.Plugin):
 
             try:
                 self.console.game.fs_basepath = self.console.getCvar('fs_basepath').getString().rstrip('/')
-                self.debug('retrieved CVAR [fs_basepath] : %s' % self.console.game.fs_game)
+                self.debug('retrieved CVAR <fs_basepath> : %s' % self.console.game.fs_game)
             except Exception, e:
-                self.warning('could not retrieve CVAR [fs_basepath] : %s' % e)
+                self.warning('could not retrieve CVAR <fs_basepath> : %s' % e)
                 self.console.game.fs_basepath = None
 
         # construct a possible demo filepath where to search the demo which is going to be deleted
@@ -531,25 +531,23 @@ class JumperPlugin(b3.plugin.Plugin):
 
                 try:
                     self.console.game.fs_homepath = self.console.getCvar('fs_homepath').getString().rstrip('/')
-                    self.debug('retrieved CVAR [fs_homepath] : %s' % self.console.game.fs_game)
+                    self.debug('retrieved CVAR <fs_homepath> : %s' % self.console.game.fs_game)
                 except Exception, e:
-                    self.warning('could not retrieve CVAR [fs_homepath] : %s' % e)
+                    self.warning('could not retrieve CVAR <fs_homepath> : %s' % e)
                     self.console.game.fs_homepath = None
 
             # construct a possible demo filepath where to search the demo which is going to be deleted
             demopath = self.console.game.fs_homepath + '/' + self.console.game.fs_game + '/' + filename
 
         if not os.path.isfile(demopath):
-            self.debug('could not find demo file at %s' % demopath)
-            self.error('could not delete demo file: file not found!')
+            self.warning('could not delete file %s: file not found!' % demopath)
             return
 
         try:
             os.unlink(demopath)
             self.debug("removed file: %s" % demopath)
         except os.error, (errno, errstr):
-            # when this happen is mostly a problem related to user permissions
-            # log it as an error so the user will notice and change is configuration
+            # when this happen is mostly a problem related to misconfiguration
             self.error("could not remove file: %s | [%d] %s" % (demopath, errno, errstr))
 
     # ######################################################################################### #
@@ -571,21 +569,19 @@ class JumperPlugin(b3.plugin.Plugin):
         cu = self.console.storage.query(self._sql['jr4'] % (cl.id, mp))
 
         if cu.EOF:
-            cmd.sayLoudOrPM(client, self._messages['client_record_unknown'] % {'client': cl.name, 'mapname': mp})
+            cmd.sayLoudOrPM(client, self.getMessage('client_record_unknown', {'client': cl.name, 'mapname': mp}))
             cu.close()
             return
 
         # print a sort of a list header so players will know what's going on
-        cmd.sayLoudOrPM(client, self._messages['client_record_header'] % {'plural': 's' if cu.rowcount > 1 else '',
-                                                                          'client': cl.name,
-                                                                          'mapname': mp})
+        cmd.sayLoudOrPM(client, self.getMessage('client_record_header', {'client': cl.name, 'mapname': mp}))
 
         while not cu.EOF:
             rw = cu.getRow()
             wi = rw['way_name'] if rw['way_name'] else rw['way_id']
             tm = self.getTimeString(int(rw['way_time']))
             dt = self.getDateString(int(rw['time_edit']))
-            cmd.sayLoudOrPM(client, self._messages['client_record_pattern'] % {'way': wi, 'time': tm, 'date': dt})
+            cmd.sayLoudOrPM(client, self.getMessage('client_record_pattern', {'way': wi, 'time': tm, 'date': dt}))
             cu.moveNext()
 
         cu.close()
@@ -598,20 +594,19 @@ class JumperPlugin(b3.plugin.Plugin):
         cu = self.console.storage.query(self._sql['jr3'] % (mp, mp))
 
         if cu.EOF:
-            cmd.sayLoudOrPM(client, self._messages['map_record_unknown'] % {'mapname': mp})
+            cmd.sayLoudOrPM(client, self.getMessage('map_record_unknown', {'mapname': mp}))
             cu.close()
             return
 
         # print a sort of a list header so players will know what's going on
-        cmd.sayLoudOrPM(client, self._messages['map_record_header'] % {'plural': 's' if cu.rowcount > 1 else '',
-                                                                       'mapname': mp})
+        cmd.sayLoudOrPM(client, self.getMessage('map_record_header', {'mapname': mp}))
 
         while not cu.EOF:
             rw = cu.getRow()
             nm = rw['name']
             wi = rw['way_name'] if rw['way_name'] else rw['way_id']
             tm = self.getTimeString(int(rw['way_time']))
-            cmd.sayLoudOrPM(client, self._messages['map_record_pattern'] % {'way': wi, 'client': nm, 'time': tm})
+            cmd.sayLoudOrPM(client, self.getMessage('map_record_pattern', {'way': wi, 'client': nm, 'time': tm}))
             cu.moveNext()
 
         cu.close()
@@ -629,21 +624,20 @@ class JumperPlugin(b3.plugin.Plugin):
 
         if cl != client:
             if client.maxLevel < self._minLevelDelete or client.maxLevel < cl.maxLevel:
-                client.message(self._messages['record_delete_denied'] % {'client': cl.name})
+                cmd.sayLoudOrPM(client, self.getMessage('record_delete_denied', {'client': cl.name}))
                 return
 
         mp = self.console.game.mapName
         cu = self.console.storage.query(self._sql['jr4'] % (cl.id, mp))
 
         if cu.EOF:
-            client.message(self._messages['client_record_unknown'] % (cl.name, mp))
+            cmd.sayLoudOrPM(client, self.getMessage('client_record_unknown', {'client': cl.name, 'mapname': mp}))
             cu.close()
             return
 
         num = cu.rowcount
         if self._demoRecord:
-            # removing old demo files if we were supposed to
-            # auto record and if the demo has been recorded
+            # removing old demo
             while not cu.EOF:
                 r = cu.getRow()
                 if r['demo'] is not None:
@@ -652,10 +646,13 @@ class JumperPlugin(b3.plugin.Plugin):
 
         cu.close()
 
-        # removing database tuples for the given client
+        # removing database records for the given client
         self.console.storage.query(self._sql['jr7'] % (cl.id, mp))
         self.verbose('removed %d record%s for %s[@%s] on %s' % (num, 's' if num > 1 else '', cl.name, cl.id, mp))
-        client.message('^7Removed ^1%d ^7record%s for %s on ^3%s' % (num, 's' if num > 1 else '', cl.name, mp))
+        cmd.sayLoudOrPM(client, self.getMessage('client_record_deleted', {'num': num,
+                                                                          'plural': 's' if num > 1 else '',
+                                                                          'client': cl.name,
+                                                                          'mapname': mp}))
 
     def cmd_jmpmapinfo(self, data, client, cmd=None):
         """\
@@ -666,7 +663,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self._mapData = self.getMapData()
 
         if not self._mapData:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_failed'])
+            cmd.sayLoudOrPM(client, self.getMessage('mapinfo_failed'))
             return
 
         if not data:
@@ -677,7 +674,7 @@ class JumperPlugin(b3.plugin.Plugin):
             matches = self.getMapsFromListSoundingLike(data)
 
             if len(matches) == 0:
-                client.message('Could not find any map matching ^1%s' % data)
+                client.message('Could not find map matching ^1%s' % data)
                 return
 
             if len(matches) > 1:
@@ -687,9 +684,8 @@ class JumperPlugin(b3.plugin.Plugin):
             mp = matches[0]
 
         mp = mp.lower()
-
         if mp not in self._mapData:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_empty'] % {'mapname': mp})
+            cmd.sayLoudOrPM(client, self.getMessage('mapinfo_empty', {'mapname': mp}))
             return
 
         # fetch informations
@@ -702,22 +698,26 @@ class JumperPlugin(b3.plugin.Plugin):
         w = int(self._mapData[mp]['nway'])
 
         if not a:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_author_unknown'] % {'mapname': n})
+            message = self.getMessage('mapinfo_author_unknown', {'mapname': n})
         else:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_author'] % {'mapname': n, 'author': a})
+            message = self.getMessage('mapinfo_failed', {'mapname': n, 'author': a})
+
+        # send the computed message
+        cmd.sayLoudOrPM(client, message)
 
         # we always know when the map has been released
-        cmd.sayLoudOrPM(client, self._messages['mapinfo_released'] % {'date': self.getDateString(t)})
+        cmd.sayLoudOrPM(client, self.getMessage('mapinfo_released', {'date': self.getDateString(t)}))
 
         if not j:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_ways'] % {'way': w, 'plural': 's' if w > 1 else ' only'})
+            message = self.getMessage('mapinfo_ways', {'way': w, 'plural': 's' if w > 1 else ' only'})
         else:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_jump_ways'] % {'jumps': j,
-                                                                           'way': w,
-                                                                           'plural': 's' if w > 1 else ''})
+            message = self.getMessage('mapinfo_jump_ways', {'jumps': j, 'way': w, 'plural': 's' if w > 1 else ''})
+
+        # send the computed message
+        cmd.sayLoudOrPM(client, message)
 
         if l > 0:
-            cmd.sayLoudOrPM(client, self._messages['mapinfo_level'] % {'level': l})
+            cmd.sayLoudOrPM(client, self.getMessage('mapinfo_level', {'level': l}))
 
     def cmd_jmpsetway(self, data, client, cmd=None):
         """\
