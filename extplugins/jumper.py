@@ -158,6 +158,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         # commands override
         self._adminPlugin.cmd_maps = self.cmd_maps
+        self._adminPlugin.cmd_map = self.cmd_map
 
     def onLoadConfig(self):
         """\
@@ -742,7 +743,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
     def cmd_jmpsetway(self, data, client, cmd=None):
         """\
-        <way-id> <name> - Set a name for the speficied way id
+        <way-id> <name> - Set a name for the specified way id
         """
         if not data:
             client.message('Invalid data. Try ^3!^7help jmpsetway')
@@ -776,6 +777,29 @@ class JumperPlugin(b3.plugin.Plugin):
     ##   COMMANDS OVERRIDE                                                                                            ##
     ##                                                                                                                ##
     ####################################################################################################################
+
+    def cmd_map(self, data, client, cmd=None):
+        """\
+        <map> - Switch current map
+        """
+        if not data:
+            client.message('Missing data. Try ^3!^7help map')
+            return
+
+        match = self.console.getMapsSoundingLike(data)
+        if not isinstance(match, basestring):
+            client.message('do you mean: ^3%s ?' % '^7, ^3'.join(match[:5]))
+            return
+
+        if self._skip_standard_maps:
+            if match in self._standard_maplist:
+                client.message('^7Could not switch map to ^1%s' % match)
+                client.message('^7Built-in maps are forbidden on this server')
+                return
+
+        self.say('^7Changing map to ^3%s' % match)
+        time.sleep(1)
+        self.write('map %s' % match)
 
     def cmd_maps(self, data, client=None, cmd=None):
         """\
