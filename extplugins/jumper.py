@@ -729,7 +729,7 @@ class JumperPlugin(b3.plugin.Plugin):
         if not a:
             message = self.getMessage('mapinfo_author_unknown', {'mapname': n})
         else:
-            message = self.getMessage('mapinfo_failed', {'mapname': n, 'author': a})
+            message = self.getMessage('mapinfo_author', {'mapname': n, 'author': a})
 
         # send the computed message
         cmd.sayLoudOrPM(client, message)
