@@ -800,12 +800,6 @@ class JumperPlugin(b3.plugin.Plugin):
             return
 
         if isinstance(match, basestring):
-            if self._skip_standard_maps:
-                if match in self._standard_maplist:
-                    client.message('^7could not switch map to ^1%s' % match)
-                    client.message('^7built-in maps are forbidden on this server')
-                    return
-
             self.console.say('^7changing map to ^3%s' % match)
             time.sleep(1)
             self.console.write('map %s' % match)
@@ -824,16 +818,10 @@ class JumperPlugin(b3.plugin.Plugin):
 
         match = self.console.getMapsSoundingLike(data)
         if isinstance(match, list):
-            client.message('do you mean: ^3%s ?' % '^7, ^3'.join(match[:5]))
+            client.message('do you mean: ^3%s?' % '^7, ^3'.join(match[:5]))
             return
 
         if isinstance(match, basestring):
-            if self._skip_standard_maps:
-                if match in self._standard_maplist:
-                    client.message('^7could not set nextmap to ^1%s' % match)
-                    client.message('^7built-in maps are forbidden on this server')
-                    return
-
             self.console.setCvar('g_nextmap', match)
             if client:
                 client.message('^7nextmap set to ^3%s' % match)
