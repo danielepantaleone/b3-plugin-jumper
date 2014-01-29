@@ -549,7 +549,7 @@ class JumperPlugin(b3.plugin.Plugin):
         If no exact match is found, then return close candidates as a list
         """
         wanted_map = mapname.lower()
-        supported_maps = self.getMaps()
+        supported_maps = self.console.getMaps()
 
         if self._skip_standard_maps:
             for m in supported_maps:
