@@ -28,6 +28,8 @@ import time
 import datetime
 import os
 import re
+
+from b3.functions import getStuffSoundingLike
 from ConfigParser import NoOptionError
 
 
@@ -165,8 +167,11 @@ class JumperPlugin(b3.plugin.Plugin):
             personal_record_failed='''^7you can do better ^3$client^7...try again!''',
             personal_record_established='''^7you established a new personal record on ^3$mapname7!''',
             record_delete_denied='''^7you can't delete ^1$client ^7records''')
-        
-        # commands override
+
+        # override parser functions
+        self.console.getMapsSoundingLike = self.getMapsSoundingLike
+
+        # override other plugin commands
         self._adminPlugin.cmd_maps = self.cmd_maps
         self._adminPlugin.cmd_map = self.cmd_map
 
@@ -579,13 +584,53 @@ class JumperPlugin(b3.plugin.Plugin):
 
     ####################################################################################################################
     ##                                                                                                                ##
+    ##   FUNCTIONS OVERRIDE                                                                                           ##
+    ##                                                                                                                ##
+    ####################################################################################################################
+
+    def getMapsSoundingLike(self, mapname):
+        """\
+        Return a valid mapname.
+        If no exact match is found, then return close candidates as a list
+        """
+        wanted_map = mapname.lower()
+        supported_maps = self.getMaps()
+
+        if self._skip_standard_maps:
+            for m in supported_maps:
+                if m in self._standard_maplist:
+                    supported_maps.remove(m)
+
+        if wanted_map in supported_maps:
+            return wanted_map
+
+        cleaned_supported_maps = dict()
+        for map_name in supported_maps:
+            cleaned_supported_maps[re.sub("^ut4?_", '', map_name, count=1)] = map_name
+
+        if wanted_map in cleaned_supported_maps:
+            return cleaned_supported_maps[wanted_map]
+
+        cleaned_wanted_map = re.sub("^ut4?_", '', wanted_map, count=1)
+
+        matches = [cleaned_supported_maps[match] for match in getStuffSoundingLike(cleaned_wanted_map,
+                                                                                   cleaned_supported_maps.keys())]
+        if len(matches) == 1:
+            # one match, get the map id
+            return matches[0]
+        else:
+            # multiple matches, provide suggestions
+            return matches
+
+    ####################################################################################################################
+    ##                                                                                                                ##
     ##   COMMANDS                                                                                                     ##
     ##                                                                                                                ##
     ####################################################################################################################
 
     def cmd_jmprecord(self, data, client, cmd=None):
         """\
-        [<client>] - Display the record(s) of a client on the current map
+        [<client>] - display the record(s) of a client on the current map
         """
         if not data:
             cl = client
@@ -642,7 +687,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
     def cmd_jmpdelrecord(self, data, client, cmd=None):
         """\
-        [<client>] - Remove current map client record(s) from the storage
+        [<client>] - remove current map client record(s) from the storage
         """
         if not data:
             cl = client
@@ -685,7 +730,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
     def cmd_jmpmapinfo(self, data, client, cmd=None):
         """\
-        [<mapname>] Display map specific informations
+        [<mapname>] - display map specific informations
         """
         if not self._map_data:
             # retrieve data from the api
@@ -750,7 +795,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
     def cmd_jmpsetway(self, data, client, cmd=None):
         """\
-        <way-id> <name> - Set a name for the specified way id
+        <way-id> <name> - set a name for the specified way id
         """
         if not data:
             client.message('invalid data, try ^3!^7help jmpsetway')
