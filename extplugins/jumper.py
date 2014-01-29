@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 __author__ = 'Fenix'
-__version__ = '2.12'
+__version__ = '2.13'
 
 import b3
 import b3.plugin
@@ -42,11 +42,8 @@ class JumperPlugin(b3.plugin.Plugin):
     _demo_record = True
     _skip_standard_maps = True
     _min_level_delete = 80
-
-    _cycle_count = 0
     _max_cycle_count = 5
-    _demo_record_regex = re.compile(r'''^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$''')
-    _set_way_name_regex = re.compile(r'''^(?P<way_id>\d+) (?P<way_name>.+)$''')
+    _cycle_count = 0
 
     _standard_maplist = ['ut4_abbey', 'ut4_abbeyctf', 'ut4_algiers', 'ut4_ambush', 'ut4_austria',
                          'ut4_bohemia', 'ut4_casa', 'ut4_cascade', 'ut4_commune', 'ut4_company', 'ut4_crossing',
@@ -58,69 +55,26 @@ class JumperPlugin(b3.plugin.Plugin):
                          'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
 
     _sql = dict(
-        jr1="""SELECT * FROM `jumpruns`
-                        WHERE `client_id` = '%s'
-                        AND `mapname` = '%s'
-                        AND `way_id` = '%d'""",
-
-        jr2="""SELECT * FROM `jumpruns`
-                        WHERE `mapname` = '%s'
-                        AND `way_id` = '%d'
-                        AND `way_time` < '%d'""",
-
-        jr3="""SELECT `cl`.`name` AS `name`,
-                      `jr`.`way_id` AS `way_id`,
-                      `jr`.`way_time` AS `way_time`,
-                      `jr`.`time_edit` AS `time_edit`,
-                      `jw`.`way_name` AS `way_name`
-                      FROM `clients` AS `cl`
-                      INNER JOIN `jumpruns` AS `jr`
-                      ON `cl`.`id` = `jr`.`client_id`
-                      LEFT OUTER JOIN `jumpways` AS `jw`
-                      ON `jr`.`way_id` =  `jw`.`way_id`
-                      AND `jr`.`mapname` =  `jw`.`mapname`
-                      WHERE `jr`.`mapname` = '%s'
-                      AND `jr`.`way_time`
-                      IN (SELECT MIN(`way_time`)
-                          FROM `jumpruns`
-                          WHERE `mapname` = '%s'
-                          GROUP BY  `way_id`)
-                      ORDER BY  `jr`.`way_id` ASC """,
-
-        jr4="""SELECT `jr`.`way_id` AS `way_id`,
-                      `jr`.`way_time` AS `way_time`,
-                      `jr`.`time_edit` AS `time_edit`,
-                      `jr`.`demo` AS `demo`,
-                      `jw`.`way_name` AS `way_name`
-                      FROM  `jumpruns` AS `jr`
-                      LEFT OUTER JOIN  `jumpways` AS `jw`
-                      ON  `jr`.`way_id` = `jw`.`way_id`
-                      AND `jr`.`mapname` = `jw`.`mapname`
-                      WHERE `jr`.`client_id` =  '%s'
-                      AND `jr`.`mapname` = '%s'
+        jr1="""SELECT * FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
+        jr2="""SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'""",
+        jr3="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,
+                      `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`
+                      INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways` AS `jw`
+                      ON `jr`.`way_id` =  `jw`.`way_id` AND `jr`.`mapname` =  `jw`.`mapname` WHERE `jr`.`mapname` = '%s'
+                      AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE `mapname` = '%s'
+                      GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC """,
+        jr4="""SELECT `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`, `jr`.`time_edit` AS `time_edit`,
+                      `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM  `jumpruns` AS `jr`
+                      LEFT OUTER JOIN  `jumpways` AS `jw` ON  `jr`.`way_id` = `jw`.`way_id`
+                      AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` =  '%s' AND `jr`.`mapname` = '%s'
                       ORDER BY `jr`.`way_id` ASC""",
-
         jr5="""INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
-
-        jr6="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s'
-                                 WHERE `client_id` = '%s'
-                                 AND `mapname` = '%s'
-                                 AND `way_id` = '%d'""",
-
-        jr7="""DELETE FROM `jumpruns`
-                      WHERE `client_id` = '%s'
-                      AND `mapname` = '%s'""",
-
-        jw1="""SELECT * FROM `jumpways`
-                        WHERE `mapname` = '%s'
-                        AND `way_id` = '%d'""",
-
+        jr6="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'
+                      AND `mapname` = '%s' AND `way_id` = '%d'""",
+        jr7="""DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""",
+        jw1="""SELECT * FROM `jumpways` WHERE `mapname` = '%s' AND `way_id` = '%d'""",
         jw2="""INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
-
-        jw3="""UPDATE `jumpways` SET `way_name` = '%s'
-                                 WHERE `mapname` = '%s'
-                                 AND `way_id` = '%d'"""
-    )
+        jw3="""UPDATE `jumpways` SET `way_name` = '%s' WHERE `mapname` = '%s' AND `way_id` = '%d'""")
 
     ####################################################################################################################
     ##                                                                                                                ##
@@ -258,7 +212,7 @@ class JumperPlugin(b3.plugin.Plugin):
             mapname = self.console.game.mapName
             if mapname in self._standard_maplist:
                 self._cycle_count += 1
-                self.console.say('^7Built-in map detected: cycling map ^3%s...' % mapname)
+                self.console.say('^7built-in map detected: cycling map ^3%s...' % mapname)
                 self.debug('built-in map detected: cycling map %s...' % mapname)
                 self.console.write('cyclemap')
 
@@ -287,9 +241,10 @@ class JumperPlugin(b3.plugin.Plugin):
         # start it and store the demo name in the client object
         if self._demo_record:
             response = self.console.write('startserverdemo %s' % cl.cid)
-            match = self._demo_record_regex.match(response)
-            if match:
-                demoname = match.group('file')
+            r = re.compile(r'''^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$''')
+            m = r.match(response)
+            if m:
+                demoname = m.group('file')
                 cl.setvar(self, 'demoname', demoname)
             else:
                 # something went wrong while retrieving the demo filename
@@ -437,7 +392,7 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         Retrieve map info from UrTJumpers API
         """
-        mapdata = {}
+        mapdata = dict()
         self.debug('contacting http://api.urtjumpers.com to retrieve maps data...')
 
         try:
@@ -449,7 +404,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         except urllib2.URLError, e:
             self.warning('could not connect to http://api.urtjumpers.com: %s' % e)
-            return {}
+            return dict()
 
         self.debug('retrieved %d maps from http://api.urtjumpers.com' % len(mapdata))
         return mapdata
@@ -802,13 +757,14 @@ class JumperPlugin(b3.plugin.Plugin):
             return
 
         # parsing user input
-        match = self._set_way_name_regex.match(data)
-        if not match:
+        r = re.compile(r'''^(?P<way_id>\d+) (?P<way_name>.+)$''')
+        m = r.match(data)
+        if not m:
             client.message('invalid data, try ^3!^7help jmpsetway')
             return
 
-        wi = int(match.group('way_id'))
-        wn = match.group('way_name')
+        wi = int(m.group('way_id'))
+        wn = m.group('way_name')
 
         mp = self.console.game.mapName
         cu = self.console.storage.query(self._sql['jw1'] % (mp, wi))
