@@ -146,26 +146,25 @@ class JumperPlugin(b3.plugin.Plugin):
         
         # set default messages
         self._default_messages = dict(
-            client_record_unknown='''^7No record found for ^3$client ^7on ^3$mapname''',
-            client_record_deleted='''^7Removed ^3$num ^7record$plural for ^3$client ^7on ^3$mapname''',
-            client_record_header='''^7Listing records for ^3$client ^7on ^3$mapname^7:''',
+            client_record_unknown='''^7no record found for ^3$client ^7on ^3$mapname''',
+            client_record_deleted='''^7removed ^3$num ^7record$plural for ^3$client ^7on ^3$mapname''',
+            client_record_header='''^7listing records for ^3$client ^7on ^3$mapname^7:''',
             client_record_pattern='''^7[^3$way^7] ^2$time ^7since ^3$date''',
             map_record_established='''^3$client ^7established a new map record^7!''',
-            map_record_unknown='''^7No record found on ^3$mapname''',
-            map_record_header='''^7Listing map records on ^3$mapname^7:''',
+            map_record_unknown='''^7no record found on ^3$mapname''',
+            map_record_header='''^7listing map records on ^3$mapname^7:''',
             map_record_pattern='''^7[^3$way^7] ^3$client ^7with ^2$time''',
-            mapinfo_failed='''^7Could not query remote server to get map data''',
-            mapinfo_empty='''^7Could not find info for map ^1$mapname''',
+            mapinfo_failed='''^7could not query remote server to get map data''',
+            mapinfo_empty='''^7could not find info for map ^1$mapname''',
             mapinfo_author_unknown='''^7I don't know who created ^3$mapname''',
             mapinfo_author='''^3$mapname ^7has been created by ^3$author''',
-            mapinfo_released='''^7It has been released on ^3$date''',
-            mapinfo_ways='''^7It's composed of ^3$way ^7way$plural''',
-            mapinfo_jump_ways='''^7It's composed of ^3$jumps ^7jumps and ^3$way ^7way$plural''',
-            mapinfo_level='''^7Level: ^3$level^7/^3100''',
-            personal_record_failed='''^7You can do better ^3$client^7...try again!''',
-            personal_record_established='''^7You established a new personal record on ^3$mapname7!''',
-            record_delete_denied='''^7You can't delete ^1$client ^7records''',
-        )
+            mapinfo_released='''^7it has been released on ^3$date''',
+            mapinfo_ways='''^7it's composed of ^3$way ^7way$plural''',
+            mapinfo_jump_ways='''^7it's composed of ^3$jumps ^7jumps and ^3$way ^7way$plural''',
+            mapinfo_level='''^7level: ^3$level^7/^3100''',
+            personal_record_failed='''^7you can do better ^3$client^7...try again!''',
+            personal_record_established='''^7you established a new personal record on ^3$mapname7!''',
+            record_delete_denied='''^7you can't delete ^1$client ^7records''')
         
         # commands override
         self._adminPlugin.cmd_maps = self.cmd_maps
@@ -754,13 +753,13 @@ class JumperPlugin(b3.plugin.Plugin):
         <way-id> <name> - Set a name for the specified way id
         """
         if not data:
-            client.message('Invalid data. Try ^3!^7help jmpsetway')
+            client.message('invalid data, try ^3!^7help jmpsetway')
             return
 
         # parsing user input
         match = self._set_way_name_regex.match(data)
         if not match:
-            client.message('Invalid data. Try ^3!^7help jmpsetway')
+            client.message('invalid data, try ^3!^7help jmpsetway')
             return
 
         wi = int(match.group('way_id'))
@@ -772,11 +771,11 @@ class JumperPlugin(b3.plugin.Plugin):
         if cu.EOF:
             # new entry for this way_id on this map
             self.console.storage.query(self._sql['jw2'] % (mp, wi, wn))
-            client.message('^7Added alias for way ^3%d^7: ^2%s' % (wi, wn))
+            client.message('^7added alias for way ^3%d^7: ^2%s' % (wi, wn))
         else:
             # update old entry with the new name
             self.console.storage.query(self._sql['jw3'] % (wn, mp, wi))
-            client.message('^7Updated alias for way ^3%d^7: ^2%s' % (wi, wn))
+            client.message('^7updated alias for way ^3%d^7: ^2%s' % (wi, wn))
 
         cu.close()
 
@@ -788,10 +787,10 @@ class JumperPlugin(b3.plugin.Plugin):
 
     def cmd_map(self, data, client, cmd=None):
         """\
-        <map> - Switch current map
+        <map> - switch current map
         """
         if not data:
-            client.message('Missing data. Try ^3!^7help map')
+            client.message('missing data, try ^3!^7help map')
             return
 
         match = self.console.getMapsSoundingLike(data)
@@ -802,13 +801,13 @@ class JumperPlugin(b3.plugin.Plugin):
         if isinstance(match, basestring):
             if self._skip_standard_maps:
                 if match in self._standard_maplist:
-                    client.message('^7Could not switch map to ^1%s' % match)
-                    client.message('^7Built-in maps are forbidden on this server')
+                    client.message('^7could not switch map to ^1%s' % match)
+                    client.message('^7built-in maps are forbidden on this server')
                     return
 
-            self.say('^7Changing map to ^3%s' % match)
+            self.console.say('^7changing map to ^3%s' % match)
             time.sleep(1)
-            self.write('map %s' % match)
+            self.console.write('map %s' % match)
             return
 
         # no map found
@@ -819,7 +818,7 @@ class JumperPlugin(b3.plugin.Plugin):
         <mapname> - Set the nextmap (partial map name works)
         """
         if not data:
-            client.message('Missing data. Try ^3!^7help pasetnextmap')
+            client.message('missing data, try ^3!^7help pasetnextmap')
             return
 
         match = self.console.getMapsSoundingLike(data)
@@ -830,8 +829,8 @@ class JumperPlugin(b3.plugin.Plugin):
         if isinstance(match, basestring):
             if self._skip_standard_maps:
                 if match in self._standard_maplist:
-                    client.message('^7Could not set nextmap to ^1%s' % match)
-                    client.message('^7Built-in maps are forbidden on this server')
+                    client.message('^7could not set nextmap to ^1%s' % match)
+                    client.message('^7built-in maps are forbidden on this server')
                     return
 
             self.console.setCvar('g_nextmap', match)
@@ -848,16 +847,16 @@ class JumperPlugin(b3.plugin.Plugin):
         List the server map rotation
         """
         if not self._adminPlugin.aquireCmdLock(cmd, client, 60, True):
-            client.message('^7Do not spam commands')
+            client.message('^7do not spam commands')
             return
 
         maps = self.console.getMaps()
         if maps is None:
-            client.message('^7Error: could not get map list')
+            client.message('^1ERROR: ^7could not get map list')
             return
 
         if not len(maps):
-            cmd.sayLoudOrPM(client, '^7Map Rotation list is empty')
+            cmd.sayLoudOrPM(client, '^7map rotation list is empty')
             return
 
         if self._skip_standard_maps:
@@ -865,5 +864,5 @@ class JumperPlugin(b3.plugin.Plugin):
                 if m in self._standard_maplist:
                     maps.remove(m)
 
-        cmd.sayLoudOrPM(client, '^7Map Rotation: ^3%s' % '^7, ^3'.join(maps))
-        return
+        # display the map rotation
+        cmd.sayLoudOrPM(client, '^7map rotation: ^3%s' % '^7, ^3'.join(maps))
