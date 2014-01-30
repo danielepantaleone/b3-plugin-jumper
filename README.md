@@ -14,7 +14,7 @@ Since version 2.1 this plugin provides a new command, **!jmpmapinfo**, which get
 ### Installing the plugin
 
 * Copy **jumper.py** into **b3/extplugins**
-* Copy **jumper.xml** into **b3/extplugins/conf**
+* Copy **plugin_jumper.ini** into **b3/extplugins/conf**
 * Import **jumper.sql** into your b3 database
 * Load the plugin in your **b3.xml** configuration file
 
@@ -25,6 +25,7 @@ Because of that both b3 and the UrT needs to be executed by the same OS user (so
 
 ### Requirements
 
+* Big Brother Bot [version >= 1.10-dev]
 * Urban Terror 4.2 server [g_modversion >= 4.2.013]
 * iourt42 parser [version >= 1.12]
 
