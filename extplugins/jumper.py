@@ -283,7 +283,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.console.write('stopserverdemo %s' % cl.cid)
 
         if not self.isPersonalRecord(event):
-            cl.message(self.getMessage('personal_record_failed'))
+            cl.message(self.getMessage('personal_record_failed', {'client': cl.name}))
             # if we were recording a server demo, delete the file
             if self.settings['demo_record'] and cl.var(self, 'demoname').value is not None:
                 self.unLinkDemo(cl.var(self, 'demoname').value)
