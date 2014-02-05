@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 __author__ = 'Fenix'
-__version__ = '2.14'
+__version__ = '2.15'
 
 import b3
 import b3.plugin
@@ -839,20 +839,26 @@ class JumperPlugin(b3.plugin.Plugin):
         if not self._adminPlugin.aquireCmdLock(cmd, client, 60, True):
             client.message('^7do not spam commands')
             return
-
+        
         maps = self.console.getMaps()
         if maps is None:
             client.message('^1ERROR: ^7could not get map list')
             return
-
+    
         if not len(maps):
             cmd.sayLoudOrPM(client, '^7map rotation list is empty')
             return
+        
+        maplist = []
+        for m in maps:
+            if self.settings['skip_standard_maps']:
+                if m.lower() in self._standard_maplist:
+                    continue
+            maplist.append(m)
 
-        if self.settings['skip_standard_maps']:
-            for m in maps:
-                if m in self._standard_maplist:
-                    maps.remove(m)
-
+        if not len(maplist):
+            cmd.sayLoudOrPM(client, '^7map rotation list is empty')
+            return
+            
         # display the map rotation
-        cmd.sayLoudOrPM(client, '^7map rotation: ^3%s' % '^7, ^3'.join(maps))
+        cmd.sayLoudOrPM(client, '^7map rotation: ^3%s' % '^7, ^3'.join(maplist))
