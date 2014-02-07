@@ -369,14 +369,16 @@ class JumperPlugin(b3.plugin.Plugin):
             return func
         return None
 
-    def getDateString(self, msec):
+    @staticmethod
+    def getDateString(msec):
         """\
         Return a date string ['Thu, 28 Jun 2001']
         """
         gmtime = time.gmtime(msec)
         return time.strftime("%a, %d %b %Y", gmtime)
 
-    def getTimeString(self, msec):
+    @staticmethod
+    def getTimeString(msec):
         """\
         Return a time string given it's value
         expressed in milliseconds [H:mm:ss:ms]
