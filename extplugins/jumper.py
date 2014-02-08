@@ -189,6 +189,11 @@ class JumperPlugin(b3.plugin.Plugin):
         self.registerEvent(b3.events.EVT_CLIENT_DISCONNECT, self.onDisconnect)
         self.registerEvent(b3.events.EVT_GAME_ROUND_START, self.onRoundStart)
 
+        # make sure to stop all the demos being recorded or the plugin
+        # will go out of sync: will not be able to retrieve demos for players
+        # who are already in a jumprun and being recorded (happens on b3 reboots)
+        self.console.write('stopserverdemo all')
+
         # notice plugin startup
         self.debug('plugin started')
 
