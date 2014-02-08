@@ -71,11 +71,11 @@ class JumperPlugin(b3.plugin.Plugin):
         jw2="""INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
         jw3="""UPDATE `jumpways` SET `way_name` = '%s' WHERE `mapname` = '%s' AND `way_id` = '%d'""")
 
-    settings = dict(demo_record=True,
-                    skip_standard_maps=True,
-                    min_level_delete=80,
-                    max_cycle_count=5,
-                    cycle_count=0)
+    _settings = dict(demo_record=True,
+                     skip_standard_maps=True,
+                     min_level_delete=80,
+                     max_cycle_count=5,
+                     cycle_count=0)
 
     ####################################################################################################################
     ##                                                                                                                ##
@@ -138,31 +138,31 @@ class JumperPlugin(b3.plugin.Plugin):
         Load plugin configuration
         """
         try:
-            self.settings['demo_record'] = self.config.getboolean('settings', 'demorecord')
-            self.debug('loaded settings/demorecord: %s' % self.settings['demo_record'])
+            self._settings['demo_record'] = self.config.getboolean('settings', 'demorecord')
+            self.debug('loaded settings/demorecord: %s' % self._settings['demo_record'])
         except NoOptionError:
             self.warning('could not find settings/demorecord in config file, '
-                         'using default: %s' % self.settings['demo_record'])
+                         'using default: %s' % self._settings['demo_record'])
         except ValueError, e:
             self.error('could not load settings/demorecord config value: %s' % e)
-            self.debug('using default value (%s) for settings/demorecord' % self.settings['demo_record'])
+            self.debug('using default value (%s) for settings/demorecord' % self._settings['demo_record'])
 
         try:
-            self.settings['skip_standard_maps'] = self.config.getboolean('settings', 'skipstandardmaps')
-            self.debug('loaded settings/skipstandardmaps: %s' % self.settings['skip_standard_maps'])
+            self._settings['skip_standard_maps'] = self.config.getboolean('settings', 'skipstandardmaps')
+            self.debug('loaded settings/skipstandardmaps: %s' % self._settings['skip_standard_maps'])
         except NoOptionError:
             self.warning('could not find settings/skipstandardmaps in config file, '
-                         'using default: %s' % self.settings['skip_standard_maps'])
+                         'using default: %s' % self._settings['skip_standard_maps'])
         except ValueError, e:
             self.error('could not load settings/skipstandardmaps config value: %s' % e)
-            self.debug('using default value (%s) for settings/skipstandardmaps' % self.settings['skip_standard_maps'])
+            self.debug('using default value (%s) for settings/skipstandardmaps' % self._settings['skip_standard_maps'])
 
         try:
-            self.settings['min_level_delete'] = self.console.getGroupLevel(self.config.get('settings', 'minleveldelete'))
-            self.debug('loaded settings/minleveldelete: %d' % self.settings['min_level_delete'])
+            self._settings['min_level_delete'] = self.console.getGroupLevel(self.config.get('settings', 'minleveldelete'))
+            self.debug('loaded settings/minleveldelete: %d' % self._settings['min_level_delete'])
         except NoOptionError:
             self.warning('could not find settings/minleveldelete in config file, '
-                         'using default: %s' % self.settings['min_level_delete'])
+                         'using default: %s' % self._settings['min_level_delete'])
 
     def onStartup(self):
         """\
@@ -203,7 +203,7 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         # remove all the demo files
         for cl in self.console.clients.getList():
-            if self.settings['demo_record'] and cl.var(self, 'jumprun').value \
+            if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
 
                 self.console.write('stopserverdemo %s' % cl.cid)
@@ -214,10 +214,10 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         Called when the plugin is enabled
         """
-        if self.settings['skip_standard_maps']:
+        if self._settings['skip_standard_maps']:
             mapname = self.console.game.mapName
             if mapname in self._standard_maplist:
-                self.settings['cycle_count'] += 1
+                self._settings['cycle_count'] += 1
                 self.console.say('^7built-in map detected: cycling map ^3%s...' % mapname)
                 self.debug('built-in map detected: cycling map %s...' % mapname)
                 self.console.write('cyclemap')
@@ -235,7 +235,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cl = event.client
 
         # remove previously started demo, if any
-        if self.settings['demo_record'] and cl.var(self, 'jumprun').value \
+        if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                 and cl.var(self, 'demoname').value is not None:
 
             self.console.write('stopserverdemo %s' % cl.cid)
@@ -245,7 +245,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         # if we are suppose to record a demo of the jumprun
         # start it and store the demo name in the client object
-        if self.settings['demo_record']:
+        if self._settings['demo_record']:
             response = self.console.write('startserverdemo %s' % cl.cid)
             r = re.compile(r'''^startserverdemo: recording (?P<name>.+) to (?P<file>.+\.(?:dm_68|urtdemo))$''')
             m = r.match(response)
@@ -263,7 +263,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cl = event.client
         cl.setvar(self, 'jumprun', False)
 
-        if self.settings['demo_record'] and cl.var(self, 'demoname').value is not None:
+        if self._settings['demo_record'] and cl.var(self, 'demoname').value is not None:
             # stop the server side demo of this client
             self.console.write('stopserverdemo %s' % cl.cid)
             self.unLinkDemo(cl.var(self, 'demoname').value)
@@ -283,14 +283,14 @@ class JumperPlugin(b3.plugin.Plugin):
         # set the jumprun stop flag
         cl.setvar(self, 'jumprun', False)
 
-        if self.settings['demo_record']:
+        if self._settings['demo_record']:
             # stop the server side demo of this client
             self.console.write('stopserverdemo %s' % cl.cid)
 
         if not self.isPersonalRecord(event):
             cl.message(self.getMessage('personal_record_failed', {'client': cl.name}))
             # if we were recording a server demo, delete the file
-            if self.settings['demo_record'] and cl.var(self, 'demoname').value is not None:
+            if self._settings['demo_record'] and cl.var(self, 'demoname').value is not None:
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'demoname', None)
 
@@ -310,19 +310,19 @@ class JumperPlugin(b3.plugin.Plugin):
         # remove all the demo files, no matter if this map
         # is going to be cycled because being a non-jump one.
         for cl in self.console.clients.getList():
-            if self.settings['demo_record'] and cl.var(self, 'jumprun').value \
+            if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
 
                 self.console.write('stopserverdemo %s' % cl.cid)
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'jumprun', False)
 
-        if self.settings['skip_standard_maps']:
+        if self._settings['skip_standard_maps']:
             mapname = self.console.game.mapName
             if mapname in self._standard_maplist:
                 # endless loop protection
-                if self.settings['cycle_count'] < self.settings['max_cycle_count']:
-                    self.settings['cycle_count'] += 1
+                if self._settings['cycle_count'] < self._settings['max_cycle_count']:
+                    self._settings['cycle_count'] += 1
                     self.debug('built-in map detected: cycling map %s...' % mapname)
                     self.console.write('cyclemap')
                     return
@@ -332,7 +332,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 # voting for standard maps. However I'll handle this in another plugin
                 self.debug('built-in map detected: could not cycle map %s due to endless loop protection...' % mapname)
 
-        self.settings['cycle_count'] = 0
+        self._settings['cycle_count'] = 0
         self._map_data = self.getMapData()
 
     def onDisconnect(self, event):
@@ -340,7 +340,7 @@ class JumperPlugin(b3.plugin.Plugin):
         Handle EVT_CLIENT_DISCONNECT
         """
         cl = event.client
-        if self.settings['demo_record'] and cl.var(self, 'jumprun').value \
+        if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                 and cl.var(self, 'demoname').value is not None:
 
             # remove the demo file if we got one since the client
@@ -354,7 +354,7 @@ class JumperPlugin(b3.plugin.Plugin):
         if event.data == b3.TEAM_SPEC:
 
             cl = event.client
-            if self.settings['demo_record'] and cl.var(self, 'jumprun').value \
+            if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
 
                 self.console.write('stopserverdemo %s' % cl.cid)
@@ -559,7 +559,7 @@ class JumperPlugin(b3.plugin.Plugin):
         wanted_map = mapname.lower()
         supported_maps = self.console.getMaps()
 
-        if self.settings['skip_standard_maps']:
+        if self._settings['skip_standard_maps']:
             for m in supported_maps:
                 if m in self._standard_maplist:
                     supported_maps.remove(m)
@@ -660,7 +660,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 return
 
         if cl != client:
-            if client.maxLevel < self.settings['min_level_delete'] or client.maxLevel < cl.maxLevel:
+            if client.maxLevel < self._settings['min_level_delete'] or client.maxLevel < cl.maxLevel:
                 cmd.sayLoudOrPM(client, self.getMessage('record_delete_denied', {'client': cl.name}))
                 return
 
@@ -673,7 +673,7 @@ class JumperPlugin(b3.plugin.Plugin):
             return
 
         num = cu.rowcount
-        if self.settings['demo_record']:
+        if self._settings['demo_record']:
             # removing old demo
             while not cu.EOF:
                 r = cu.getRow()
@@ -858,7 +858,7 @@ class JumperPlugin(b3.plugin.Plugin):
         
         maplist = []
         for m in maps:
-            if self.settings['skip_standard_maps']:
+            if self._settings['skip_standard_maps']:
                 if m.lower() in self._standard_maplist:
                     continue
             maplist.append(m)
