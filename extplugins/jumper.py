@@ -14,7 +14,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 __author__ = 'Fenix'
 __version__ = '2.16'
@@ -182,12 +182,12 @@ class JumperPlugin(b3.plugin.Plugin):
                     self._adminPlugin.registerCommand(self, cmd, level, func, alias)
 
         # register the events needed
-        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_START, self.onJumpRunStart)
-        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_STOP, self.onJumpRunStop)
-        self.registerEvent(b3.events.EVT_CLIENT_JUMP_RUN_CANCEL, self.onJumpRunCancel)
-        self.registerEvent(b3.events.EVT_CLIENT_TEAM_CHANGE, self.onTeamChange)
-        self.registerEvent(b3.events.EVT_CLIENT_DISCONNECT, self.onDisconnect)
-        self.registerEvent(b3.events.EVT_GAME_ROUND_START, self.onRoundStart)
+        self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_START'), self.onJumpRunStart)
+        self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP'), self.onJumpRunStop)
+        self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_CANCEL'), self.onJumpRunCancel)
+        self.registerEvent(self.console.getEventID('EVT_CLIENT_TEAM_CHANGE'), self.onTeamChange)
+        self.registerEvent(self.console.getEventID('EVT_CLIENT_DISCONNECT'), self.onDisconnect)
+        self.registerEvent(self.console.getEventID('EVT_GAME_ROUND_START'), self.onRoundStart)
 
         # make sure to stop all the demos being recorded or the plugin
         # will go out of sync: will not be able to retrieve demos for players
