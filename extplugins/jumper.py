@@ -50,22 +50,22 @@ class JumperPlugin(b3.plugin.Plugin):
                          'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
 
     _sql = dict(
-        jr1="""SELECT * FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
+        jr1="""SELECT * FROM jumpruns WHERE client_id = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
         jr2="""SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'""",
-        jr3="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,
-                      `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`
-                      INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways` AS `jw`
-                      ON `jr`.`way_id` =  `jw`.`way_id` AND `jr`.`mapname` =  `jw`.`mapname` WHERE `jr`.`mapname` = '%s'
-                      AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE `mapname` = '%s'
-                      GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC """,
-        jr4="""SELECT `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`, `jr`.`time_edit` AS `time_edit`,
-                      `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM  `jumpruns` AS `jr`
-                      LEFT OUTER JOIN  `jumpways` AS `jw` ON  `jr`.`way_id` = `jw`.`way_id`
-                      AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` =  '%s' AND `jr`.`mapname` = '%s'
-                      ORDER BY `jr`.`way_id` ASC""",
+        jr3="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,"""
+            """       `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`"""
+            """       INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`"""
+            """       AS `jw` ON `jr`.`way_id` =  `jw`.`way_id` AND `jr`.`mapname` =  `jw`.`mapname` WHERE"""
+            """       `jr`.`mapname` = '%s' AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE """
+            """       `mapname` = '%s' GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC """,
+        jr4="""SELECT `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`, `jr`.`time_edit` AS `time_edit`,"""
+            """       `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM  `jumpruns` AS `jr`"""
+            """       LEFT OUTER JOIN  `jumpways` AS `jw` ON  `jr`.`way_id` = `jw`.`way_id`"""
+            """       AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` =  '%s' AND `jr`.`mapname` = '%s'"""
+            """       ORDER BY `jr`.`way_id` ASC""",
         jr5="""INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
-        jr6="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'
-                      AND `mapname` = '%s' AND `way_id` = '%d'""",
+        jr6="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'"""
+            """       AND `mapname` = '%s' AND `way_id` = '%d'""",
         jr7="""DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""",
         jw1="""SELECT * FROM `jumpways` WHERE `mapname` = '%s' AND `way_id` = '%d'""",
         jw2="""INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
