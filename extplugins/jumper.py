@@ -158,11 +158,15 @@ class JumperPlugin(b3.plugin.Plugin):
             self.debug('using default value (%s) for settings/skipstandardmaps' % self._settings['skip_standard_maps'])
 
         try:
-            self._settings['min_level_delete'] = self.console.getGroupLevel(self.config.get('settings', 'minleveldelete'))
+            level = self.config.get('settings', 'minleveldelete')
+            self._settings['min_level_delete'] = self.console.getGroupLevel(level)
             self.debug('loaded settings/minleveldelete: %d' % self._settings['min_level_delete'])
         except NoOptionError:
             self.warning('could not find settings/minleveldelete in config file, '
                          'using default: %s' % self._settings['min_level_delete'])
+        except KeyError, e:
+            self.error('could not load settings/minleveldelete config value: %s' % e)
+            self.debug('using default value (%s) for settings/minleveldelete' % self._settings['min_level_delete'])
 
     def onStartup(self):
         """\
