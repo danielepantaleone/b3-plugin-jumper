@@ -637,9 +637,21 @@ class JumperPlugin(b3.plugin.Plugin):
 
     def cmd_jmpmaprecord(self, data, client, cmd=None):
         """\
-        Display the current map record(s)
+        [<mapname>] - display map best jump run(s)
         """
-        mp = self.console.game.mapName
+        if data:
+            mp = self.console.getMapsSoundingLike(data)
+            if isinstance(mp, list):
+                client.message('do you mean: ^3%s?' % '^7, ^3'.join(mp[:5]))
+                return
+
+            if not isinstance(mp, basestring):
+                client.message('^7could not find any map matching ^1%s' % data)
+                return
+        else:
+            mp = self.console.game.mapName
+
+        # get data from the storage layer
         cu = self.console.storage.query(self._sql['jr3'] % (mp, mp))
 
         if cu.EOF:
