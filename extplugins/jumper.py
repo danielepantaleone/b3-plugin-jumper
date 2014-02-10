@@ -650,6 +650,7 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         [<mapname>] - display map best jump run(s)
         """
+        mp = self.console.game.mapName
         if data:
             mp = self.console.getMapsSoundingLike(data)
             if isinstance(mp, list):
@@ -659,8 +660,6 @@ class JumperPlugin(b3.plugin.Plugin):
             if not isinstance(mp, basestring):
                 client.message('^7could not find any map matching ^1%s' % data)
                 return
-        else:
-            mp = self.console.game.mapName
 
         # get data from the storage layer
         cu = self.console.storage.query(self._sql['jr3'] % (mp, mp))
@@ -687,6 +686,7 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         [<mapname>] - display map top runs
         """
+        mp = self.console.game.mapName
         if data:
             mp = self.console.getMapsSoundingLike(data)
             if isinstance(mp, list):
@@ -696,8 +696,6 @@ class JumperPlugin(b3.plugin.Plugin):
             if not isinstance(mp, basestring):
                 client.message('^7could not find any map matching ^1%s' % data)
                 return
-        else:
-            mp = self.console.game.mapName
 
         # get the list of paths with jumpruns recorded
         c1 = self.console.storage.query(self._sql['jr5'] % mp)
@@ -795,22 +793,20 @@ class JumperPlugin(b3.plugin.Plugin):
             cmd.sayLoudOrPM(client, self.getMessage('mapinfo_failed'))
             return
 
-        if not data:
-            # search info for the current map
-            mp = self.console.game.mapName
-        else:
+        mp = self.console.game.mapName
+        if data:
             # search info for the specified map
-            matches = self.getMapsFromListSoundingLike(data)
+            match = self.getMapsFromListSoundingLike(data)
 
-            if len(matches) == 0:
-                client.message('Could not find map matching ^1%s' % data)
+            if len(match) == 0:
+                client.message('^7could not find any map matching ^1%s' % data)
                 return
 
-            if len(matches) > 1:
-                client.message('Do you mean: %s?' % ', '.join(matches[:5]))
+            if len(match) > 1:
+                client.message('do you mean: ^3%s?' % '^7, ^3'.join(match[:5]))
                 return
 
-            mp = matches[0]
+            mp = match[0]
 
         mp = mp.lower()
         if mp not in self._map_data:
