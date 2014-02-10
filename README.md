@@ -31,13 +31,14 @@ Because of that both b3 and the UrT needs to be executed by the same OS user (so
 
 ## In-game user guide
 
-* **!jmprecord [client]** *Display the record(s) of a client on the current map*
-* **!jmpdelrecord [client]** *Remove current map client record(s) from the storage*
-* **!jmpmaprecord** *Display the current map record(s)*
-* **!jmpmapinfo [mapname]** *Display the current map information (thanks UrTJumpers community)*
-* **!jmpsetway [way-id] [name]** *Set a name for the speficied way id*
+* **!jmprecord [&lt;client&gt;] [&lt;mapname&gt;]** - *display the best run(s) of a client on a specific map*
+* **!jmpmaprecord [&lt;mapname&gt;]** - *display map best jump run(s)*
+* **!jmptopruns [&lt;mapname&gt;]** - *display map top run(s)*
+* **!jmpdelrecord [&lt;client&gt;] [&lt;mapname&gt;]** - *delete the best run(s) of a client on a specific map*
+* **!jmpmapinfo [&lt;mapname&gt;]** - *display map specific informations*
+* **!jmpsetway [&lt;way-id&gt;] [&lt;name&gt;]** - *set a name for the specified way id*
 
 ## Support
 
-For support regarding this very plugin you can find me on IRC on **#urbanterror / #goreclan** @ **Quakenet**<br>
+For support regarding this very plugin you can find me on IRC on **#goreclan** @ **Quakenet**<br>
 For support regarding Big Brother Bot you may ask for help on the official website: http://www.bigbrotherbot.net
