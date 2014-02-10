@@ -55,18 +55,24 @@ class JumperPlugin(b3.plugin.Plugin):
         jr3="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,"""
             """       `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`"""
             """       INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`"""
-            """       AS `jw` ON `jr`.`way_id` =  `jw`.`way_id` AND `jr`.`mapname` =  `jw`.`mapname` WHERE"""
-            """       `jr`.`mapname` = '%s' AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE """
-            """       `mapname` = '%s' GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC """,
+            """       AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname` WHERE"""
+            """       `jr`.`mapname` = '%s' AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE"""
+            """       `mapname` = '%s' GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC""",
         jr4="""SELECT `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`, `jr`.`time_edit` AS `time_edit`,"""
-            """       `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM  `jumpruns` AS `jr`"""
+            """       `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM `jumpruns` AS `jr`"""
             """       LEFT OUTER JOIN  `jumpways` AS `jw` ON  `jr`.`way_id` = `jw`.`way_id`"""
-            """       AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` =  '%s' AND `jr`.`mapname` = '%s'"""
+            """       AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` = '%s' AND `jr`.`mapname` = '%s'"""
             """       ORDER BY `jr`.`way_id` ASC""",
-        jr5="""INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
-        jr6="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'"""
+        jr5="""SELECT DISTINCT  `way_id` FROM  `jumpruns` WHERE  `mapname` =  '%s' ORDER BY `way_id` ASC""",
+        jr6="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,"""
+            """       `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`"""
+            """       INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`"""
+            """       AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname`"""
+            """       WHERE `jr`.`mapname` = '%s' AND `jr`.`way_id` = '%d' ORDER BY `jr`.`way_time` ASC LIMIT 3""",
+        jr7="""INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
+        jr8="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'"""
             """       AND `mapname` = '%s' AND `way_id` = '%d'""",
-        jr7="""DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""",
+        jr9="""DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""",
         jw1="""SELECT * FROM `jumpways` WHERE `mapname` = '%s' AND `way_id` = '%d'""",
         jw2="""INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
         jw3="""UPDATE `jumpways` SET `way_name` = '%s' WHERE `mapname` = '%s' AND `way_id` = '%d'""")
@@ -111,6 +117,8 @@ class JumperPlugin(b3.plugin.Plugin):
             map_record_unknown='''^7no record found on ^3$mapname''',
             map_record_header='''^7listing map records on ^3$mapname^7:''',
             map_record_pattern='''^7[^3$way^7] ^3$client ^7with ^2$time''',
+            map_toprun_header='''^7listing top runs on ^3$mapname^7:''',
+            map_toprun_pattern='''^7[^3$way^7] #$place ^3$client ^7with ^2$time''',
             mapinfo_failed='''^7could not query remote server to get map data''',
             mapinfo_empty='''^7could not find info for map ^1$mapname''',
             mapinfo_author_unknown='''^7I don't know who created ^3$mapname''',
@@ -460,7 +468,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cursor = self.console.storage.query(self._sql['jr1'] % (cl.id, mp, wi))
         if cursor.EOF:
             # no record saved for this client on this map in this way_id
-            self.console.storage.query(self._sql['jr5'] % (cl.id, mp, wi, wt, tm, tm, dm))
+            self.console.storage.query(self._sql['jr7'] % (cl.id, mp, wi, wt, tm, tm, dm))
             self.verbose('stored new jumprun for client %s [ mapname : %s | way_id : %d ]' % (cl.id, mp, wi))
             cursor.close()
             return True
@@ -471,7 +479,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 # remove previous stored demo
                 self.unLinkDemo(r['demo'])
 
-            self.console.storage.query(self._sql['jr6'] % (wt, tm, dm, cl.id, mp, wi))
+            self.console.storage.query(self._sql['jr8'] % (wt, tm, dm, cl.id, mp, wi))
             self.verbose('updated jumprun for client %s [ mapname : %s | way_id : %d ]' % (cl.id, mp, wi))
             cursor.close()
             return True
@@ -652,6 +660,52 @@ class JumperPlugin(b3.plugin.Plugin):
 
         cu.close()
 
+    def cmd_jmptopruns(self, data, client, cmd=None):
+        """\
+        [<mapname>] - display map top runs
+        """
+        if data:
+            mp = self.console.getMapsSoundingLike(data)
+            if isinstance(mp, list):
+                client.message('do you mean: ^3%s?' % '^7, ^3'.join(mp[:5]))
+                return
+
+            if not isinstance(mp, basestring):
+                client.message('^7could not find any map matching ^1%s' % data)
+                return
+        else:
+            mp = self.console.game.mapName
+
+        # get the list of paths with jumpruns recorded
+        c1 = self.console.storage.query(self._sql['jr5'] % mp)
+
+        if c1.EOF:
+            cmd.sayLoudOrPM(client, self.getMessage('map_record_unknown', {'mapname': mp}))
+            c1.close()
+            return
+
+        # print a sort of a list header so players will know what's going on
+        cmd.sayLoudOrPM(client, self.getMessage('map_toprun_header', {'mapname': mp}))
+
+        while not c1.EOF:
+            pl = 1
+            r1 = c1.getRow()
+            c2 = self.console.storage.query(self._sql['jr6'] % (mp, int(r1['way_id'])))
+            while not c2.EOF:
+                r2 = c2.getRow()
+                nm = r2['name']
+                wi = r2['way_name'] if r2['way_name'] else r2['way_id']
+                tm = self.getTimeString(int(r2['way_time']))
+                message = self.getMessage('map_toprun_pattern', {'way': wi, 'place': pl, 'client': nm, 'time': tm})
+                cmd.sayLoudOrPM(client, message)
+                c2.moveNext()
+                pl += 1
+
+            c1.moveNext()
+            c2.close()
+
+        c1.close()
+
     def cmd_jmpdelrecord(self, data, client, cmd=None):
         """\
         [<client>] - remove current map client record(s) from the storage
@@ -688,7 +742,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cu.close()
 
         # removing database records for the given client
-        self.console.storage.query(self._sql['jr7'] % (cl.id, mp))
+        self.console.storage.query(self._sql['jr9'] % (cl.id, mp))
         self.verbose('removed %d record%s for %s[@%s] on %s' % (num, 's' if num > 1 else '', cl.name, cl.id, mp))
         cmd.sayLoudOrPM(client, self.getMessage('client_record_deleted', {'num': num,
                                                                           'plural': 's' if num > 1 else '',
