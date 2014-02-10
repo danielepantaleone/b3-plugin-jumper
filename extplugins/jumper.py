@@ -605,16 +605,27 @@ class JumperPlugin(b3.plugin.Plugin):
 
     def cmd_jmprecord(self, data, client, cmd=None):
         """\
-        [<client>] - display the record(s) of a client on the current map
+        [<client>] [<mapname>] - display the best run(s) of a client on a specific map
         """
-        if not data:
-            cl = client
-        else:
-            cl = self._adminPlugin.findClientPrompt(data, client)
+        cl = client
+        mp = self.console.game.mapName
+        ps = self._adminPlugin.parseUserCmd(data)
+        if ps:
+            cl = self._adminPlugin.findClientPrompt(ps[0], client)
             if not cl:
                 return
 
-        mp = self.console.game.mapName
+            if ps[1]:
+                mp = self.console.getMapsSoundingLike(ps[1])
+                if isinstance(mp, list):
+                    client.message('do you mean: ^3%s?' % '^7, ^3'.join(mp[:5]))
+                    return
+
+                if not isinstance(mp, basestring):
+                    client.message('^7could not find any map matching ^1%s' % ps[1])
+                    return
+
+        # get data from the storage layer
         cu = self.console.storage.query(self._sql['jr4'] % (cl.id, mp))
 
         if cu.EOF:
