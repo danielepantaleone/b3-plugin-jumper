@@ -314,7 +314,6 @@ class JumperPlugin(b3.plugin.Plugin):
         # remove previously started demo, if any
         if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                 and cl.var(self, 'demoname').value is not None:
-
             self.console.write('stopserverdemo %s' % cl.cid)
             self.unLinkDemo(cl.var(self, 'demoname').value)
 
@@ -351,8 +350,7 @@ class JumperPlugin(b3.plugin.Plugin):
         Handle EVT_CLIENT_JUMP_RUN_STOP
         """
         cl = event.client
-
-        if not cl.isvar(self, 'jumprun') or not cl.var(self, 'jumprun').value:
+        if not cl.var(self, 'jumprun').value:
             # double check that we started recording this client correctly:
             # if b3 gets restarted meanwhile a jumprun is being recorded
             # we'll have no 'jumprun' variable in the client object
@@ -699,8 +697,9 @@ class JumperPlugin(b3.plugin.Plugin):
             cu.close()
             return
 
-        # print a sort of a list header so players will know what's going on
-        cmd.sayLoudOrPM(client, self.getMessage('client_record_header', {'client': cl.name, 'mapname': mp}))
+        if cu.rowcount > 1:
+            # print a sort of a list header so players will know what's going on
+            cmd.sayLoudOrPM(client, self.getMessage('client_record_header', {'client': cl.name, 'mapname': mp}))
 
         while not cu.EOF:
             rw = cu.getRow()
@@ -735,8 +734,9 @@ class JumperPlugin(b3.plugin.Plugin):
             cu.close()
             return
 
-        # print a sort of a list header so players will know what's going on
-        cmd.sayLoudOrPM(client, self.getMessage('map_record_header', {'mapname': mp}))
+        if cu.rowcount > 1:
+            # print a sort of a list header so players will know what's going on
+            cmd.sayLoudOrPM(client, self.getMessage('map_record_header', {'mapname': mp}))
 
         while not cu.EOF:
             rw = cu.getRow()
@@ -771,8 +771,9 @@ class JumperPlugin(b3.plugin.Plugin):
             c1.close()
             return
 
-        # print a sort of a list header so players will know what's going on
-        cmd.sayLoudOrPM(client, self.getMessage('map_toprun_header', {'mapname': mp}))
+        if c1.rowcount > 1:
+            # print a sort of a list header so players will know what's going on
+            cmd.sayLoudOrPM(client, self.getMessage('map_toprun_header', {'mapname': mp}))
 
         while not c1.EOF:
             pl = 1
