@@ -90,6 +90,7 @@ import urllib2
 import json
 import time
 import datetime
+import socket
 import os
 import re
 
@@ -486,7 +487,7 @@ class JumperPlugin(b3.plugin.Plugin):
             for data in jd:
                 mapdata[data['pk3'].lower()] = data
 
-        except urllib2.URLError, e:
+        except (urllib2.URLError, socket.timeout), e:
             self.warning('could not connect to http://api.urtjumpers.com: %s' % e)
             return dict()
 
@@ -1021,3 +1022,84 @@ class JumperPlugin(b3.plugin.Plugin):
             
         # display the map rotation
         cmd.sayLoudOrPM(client, '^7map rotation: ^3%s' % '^7, ^3'.join(maplist))
+
+
+########################################################################################################################
+##                                                                                                                    ##
+##   RACE SECTION                                                                                                     ##
+##                                                                                                                    ##
+########################################################################################################################
+
+# race state flags
+RACE_JOINING = 1 << 0
+RACE_RUNNING = 1 << 1
+RACE_STOPPED = 1 << 2
+
+
+class JumpRace(object):
+    """\
+    Represent a jump race
+    """
+    list = []
+    size = 10
+
+    # bitflag
+    state = 0
+
+    # b3 plugin references
+    console = None
+    verbose = None
+    debug = None
+
+    def __init__(self, plugin, client, size=10):
+        """\
+        Object constructor
+        """
+        self.size = size
+        self.list = [client]
+
+        # just to ease class syntax
+        self.console = plugin.console
+        self.verbose = plugin.verbose
+        self.debug = plugin.debug
+
+        # set correct race state
+        self.state &= RACE_JOINING
+
+    def add_client(self, cl):
+        """\
+        Add a client to the race
+        """
+        if not self.state & RACE_JOINING:
+            return False
+
+        if len(self.list) < self.size:
+            if cl not in self.list:
+                self.list.append(cl)
+                self.console.say('^7[^3%d^7/^3%d^7] %s ^2joined ^7the race' % (len(self.list), self.size, cl.name))
+                return True
+
+            # client is already listed in this race
+            cl.message('^7You are already taking part to this race')
+            return False
+
+        # race is full and it's going to start soon
+        cl.message('^7This race is ^1full^7: you need to wait for the next one')
+        return False
+
+    def del_client(self, cl):
+
+        if self.state & RACE_JOINING:
+
+            if cl in self.list:
+                self.list.remove(cl)
+                self.console.say('^7[^3%d^7/^3%d^7] %s ^7chicken out ^7of the race' % (len(self.list), self.size, cl.name))
+                return True
+
+            # client is not taking part to the race
+            cl.message('^7You did not subscribed for this race')
+            return False
+
+        if self.state & RACE_RUNNING:
+            # check for race end
+            pass
