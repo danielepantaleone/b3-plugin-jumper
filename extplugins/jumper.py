@@ -20,7 +20,7 @@
 #
 # 09/08/2013 - 2.0 - Fenix
 #   - created new version of the plugin compatible with Urban Terror 4.2 jump mode specific events
-# 31/08/2013 - 2.1 - Fenix
+# 31/08/2013 - 2.1 - Fenix, jmarc
 #   - added command !jmpmapinfo: display map specific informations (thanks UrTJumpers community)
 # 08/09/2013 - 2.2 - Fenix
 #   - updated algorithm for map search
@@ -79,9 +79,14 @@
 #   - added optional parameter to !jmpdelrecord command
 #   - added optional parameter to !jmprecord command
 #   - several code improvements
+# 23/02/2014 - 2.19 - Fenix
+#   - catch also socket.timeout exception while retrieving maps data from urtjumpers api
+#   - set client var 'demoname' to None if the regex fails in parsing the server response
+#   - do not print in-game jumprun list header if we retrieved just one value
+#   - changed some log messages level: just for debugging
 
 __author__ = 'Fenix'
-__version__ = '2.18'
+__version__ = '2.19'
 
 import b3
 import b3.plugin
