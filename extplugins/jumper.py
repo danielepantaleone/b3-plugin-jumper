@@ -332,6 +332,7 @@ class JumperPlugin(b3.plugin.Plugin):
             else:
                 # something went wrong while retrieving the demo filename
                 self.warning("could not retrieve demo filename for client %s <@%s>: %s" % (cl.name, cl.id, response))
+                cl.setvar(self, 'demoname', None)
 
     def onJumpRunCancel(self, event):
         """\
@@ -534,7 +535,7 @@ class JumperPlugin(b3.plugin.Plugin):
         if cursor.EOF:
             # no record saved for this client on this map in this way_id
             self.console.storage.query(self._sql['jr7'] % (cl.id, mp, wi, wt, tm, tm, dm))
-            self.verbose('stored new jumprun for client %s [ mapname : %s | way_id : %d ]' % (cl.id, mp, wi))
+            self.debug('stored new jumprun for client %s [ mapname : %s | way_id : %d ]' % (cl.id, mp, wi))
             cursor.close()
             return True
 
@@ -545,7 +546,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 self.unLinkDemo(r['demo'])
 
             self.console.storage.query(self._sql['jr8'] % (wt, tm, dm, cl.id, mp, wi))
-            self.verbose('updated jumprun for client %s [ mapname : %s | way_id : %d ]' % (cl.id, mp, wi))
+            self.debug('updated jumprun for client %s [ mapname : %s | way_id : %d ]' % (cl.id, mp, wi))
             cursor.close()
             return True
 
