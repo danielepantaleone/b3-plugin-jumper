@@ -84,9 +84,11 @@
 #   - set client var 'demoname' to None if the regex fails in parsing the server response
 #   - do not print in-game jumprun list header if we retrieved just one value
 #   - changed some log messages level: just for debugging
+# 13/03/2014 - 2.20 - Fenix
+#   - updated sql queries not to bother ourselves with character espacing
 
 __author__ = 'Fenix'
-__version__ = '2.19'
+__version__ = '2.20'
 
 import b3
 import b3.plugin
