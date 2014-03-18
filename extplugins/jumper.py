@@ -289,13 +289,20 @@ class JumperPlugin(b3.plugin.Plugin):
                 if func:
                     self._adminPlugin.registerCommand(self, cmd, level, func, alias)
 
-        # register the events needed
-        self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_START'), self.onJumpRunStart)
-        self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP'), self.onJumpRunStop)
-        self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_CANCEL'), self.onJumpRunCancel)
-        self.registerEvent(self.console.getEventID('EVT_CLIENT_TEAM_CHANGE'), self.onTeamChange)
-        self.registerEvent(self.console.getEventID('EVT_CLIENT_DISCONNECT'), self.onDisconnect)
-        self.registerEvent(self.console.getEventID('EVT_GAME_ROUND_START'), self.onRoundStart)
+        try:
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_START'), self.onJumpRunStart)
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP'), self.onJumpRunStop)
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_CANCEL'), self.onJumpRunCancel)
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_TEAM_CHANGE'), self.onTeamChange)
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_DISCONNECT'), self.onDisconnect)
+            self.registerEvent(self.console.getEventID('EVT_GAME_ROUND_START'), self.onRoundStart)
+        except TypeError:
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_START'))
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP'))
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_CANCEL'))
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_TEAM_CHANGE'))
+            self.registerEvent(self.console.getEventID('EVT_CLIENT_DISCONNECT'))
+            self.registerEvent(self.console.getEventID('EVT_GAME_ROUND_START'))
 
         # make sure to stop all the demos being recorded or the plugin
         # will go out of sync: will not be able to retrieve demos for players
@@ -335,6 +342,23 @@ class JumperPlugin(b3.plugin.Plugin):
     ##   EVENTS                                                                                                       ##
     ##                                                                                                                ##
     ####################################################################################################################
+
+    def onEvent(self, event):
+        """\
+        Old event system dispatcher
+        """
+        if event.type == self.console.getEventID('EVT_CLIENT_JUMP_RUN_START'):
+            self.onJumpRunStart(event)
+        elif event.type == self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP'):
+            self.onJumpRunStop(event)
+        elif event.type == self.console.getEventID('EVT_CLIENT_JUMP_RUN_CANCEL'):
+            self.onJumpRunCancel(event)
+        elif event.type == self.console.getEventID('EVT_CLIENT_TEAM_CHANGE'):
+            self.onTeamChange(event)
+        elif event.type == self.console.getEventID('EVT_CLIENT_DISCONNECT'):
+            self.onDisconnect(event)
+        elif event.type == self.console.getEventID('EVT_GAME_ROUND_START'):
+            self.onRoundStart(event)
 
     def onJumpRunStart(self, event):
         """\
