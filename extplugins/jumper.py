@@ -252,6 +252,30 @@ class JumperPlugin(b3.plugin.Plugin):
         """\
         Initialize plugin settings
         """
+        # create database tables if needed
+        tables = self.console.storage.getTables()
+        if not 'jumpruns' in tables:
+            self.console.storage.query("""CREATE TABLE IF NOT EXISTS `jumpruns` (
+                                          `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+                                          `client_id` int(10) unsigned NOT NULL,
+                                          `mapname` varchar(64) NOT NULL,
+                                          `way_id` int(3) NOT NULL,
+                                          `way_time` int(10) unsigned NOT NULL,
+                                          `time_add` int(10) unsigned NOT NULL,
+                                          `time_edit` int(10) unsigned NOT NULL,
+                                          `demo` varchar(128) DEFAULT NULL,
+                                          PRIMARY KEY (`id`)
+                                          ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;""")
+
+        if not 'jumpways' in tables:
+            self.console.storage.query("""CREATE TABLE IF NOT EXISTS `jumpways` (
+                                          `id` int(10) NOT NULL AUTO_INCREMENT,
+                                          `mapname` varchar(64) NOT NULL,
+                                          `way_id` int(3) NOT NULL,
+                                          `way_name` varchar(64) NOT NULL,
+                                          PRIMARY KEY (`id`)
+                                          ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;""")
+
         # register our commands
         if 'commands' in self.config.sections():
             for cmd in self.config.options('commands'):
