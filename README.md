@@ -15,7 +15,6 @@ Since version 2.1 this plugin provides a new command, **!jmpmapinfo**, which get
 
 * Copy **jumper.py** into **b3/extplugins**
 * Copy **plugin_jumper.ini** into **b3/extplugins/conf**
-* Import **jumper.sql** into your b3 database
 * Load the plugin in your **b3.xml** configuration file
 
 ### Demo auto recording
@@ -25,7 +24,6 @@ Because of that both b3 and the UrT needs to be executed by the same OS user (so
 
 ### Requirements
 
-* Big Brother Bot [version >= 1.10-dev]
 * Urban Terror 4.2 server [g_modversion >= 4.2.013]
 * iourt42 parser [version >= 1.12]
 
@@ -36,7 +34,7 @@ Because of that both b3 and the UrT needs to be executed by the same OS user (so
 * **!jmptopruns [&lt;mapname&gt;]** - *display map top run(s)*
 * **!jmpdelrecord [&lt;client&gt;] [&lt;mapname&gt;]** - *delete the best run(s) of a client on a specific map*
 * **!jmpmapinfo [&lt;mapname&gt;]** - *display map specific informations*
-* **!jmpsetway [&lt;way-id&gt;] [&lt;name&gt;]** - *set a name for the specified way id*
+* **!jmpsetway &lt;way-id&gt; &lt;name&gt;** - *set a name for the specified way id*
 
 ## Support
 

@@ -86,9 +86,11 @@
 #   - changed some log messages level: just for debugging
 # 13/03/2014 - 2.20 - Fenix
 #   - updated sql queries not to bother ourselves with character espacing
-
+# 18/03/2014 - 2.21 - Fenix
+#   - automatically create necessary database tables
+#   - added backward compatibility: support b3 version < 1.10dev
 __author__ = 'Fenix'
-__version__ = '2.20'
+__version__ = '2.21'
 
 import b3
 import b3.plugin
