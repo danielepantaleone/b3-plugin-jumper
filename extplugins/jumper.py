@@ -89,8 +89,11 @@
 # 18/03/2014 - 2.21 - Fenix
 #   - automatically create necessary database tables
 #   - added backward compatibility: support b3 version < 1.10dev
+# 24/03/2014 - 2.22 - Fenix
+#   - changed back SQL queries to use % notation for string substitution
+
 __author__ = 'Fenix'
-__version__ = '2.21'
+__version__ = '2.22'
 
 import b3
 import b3.plugin
@@ -124,32 +127,32 @@ class JumperPlugin(b3.plugin.Plugin):
                          'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
 
     _sql = dict(
-        jr1="""SELECT * FROM jumpruns WHERE client_id = ? AND `mapname` = ? AND `way_id` = ?""",
-        jr2="""SELECT * FROM `jumpruns` WHERE `mapname` = ? AND `way_id` = ? AND `way_time` < ?""",
+        jr1="""SELECT * FROM jumpruns WHERE client_id = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
+        jr2="""SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'""",
         jr3="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,"""
             """       `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`"""
             """       INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`"""
             """       AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname` WHERE"""
-            """       `jr`.`mapname` = ? AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE"""
-            """       `mapname` = ? GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC""",
+            """       `jr`.`mapname` = '%s' AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE"""
+            """       `mapname` = '%s' GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC""",
         jr4="""SELECT `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`, `jr`.`time_edit` AS `time_edit`,"""
             """       `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM `jumpruns` AS `jr`"""
             """       LEFT OUTER JOIN  `jumpways` AS `jw` ON  `jr`.`way_id` = `jw`.`way_id`"""
-            """       AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` = ? AND `jr`.`mapname` = ?"""
+            """       AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` = '%s' AND `jr`.`mapname` = '%s'"""
             """       ORDER BY `jr`.`way_id` ASC""",
-        jr5="""SELECT DISTINCT  `way_id` FROM  `jumpruns` WHERE  `mapname` =  ? ORDER BY `way_id` ASC""",
+        jr5="""SELECT DISTINCT  `way_id` FROM  `jumpruns` WHERE  `mapname` =  '%s' ORDER BY `way_id` ASC""",
         jr6="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,"""
             """       `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`"""
             """       INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`"""
             """       AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname`"""
-            """       WHERE `jr`.`mapname` = ? AND `jr`.`way_id` = ? ORDER BY `jr`.`way_time` ASC LIMIT 3""",
-        jr7="""INSERT INTO `jumpruns` VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)""",
-        jr8="""UPDATE `jumpruns` SET `way_time` = ?, `time_edit` = ?, `demo` = ?"""
-            """       WHERE `client_id` = ? AND `mapname` = ? AND `way_id` = ?""",
-        jr9="""DELETE FROM `jumpruns` WHERE `client_id` = ? AND `mapname` = ?""",
-        jw1="""SELECT * FROM `jumpways` WHERE `mapname` = ? AND `way_id` = ?""",
-        jw2="""INSERT INTO `jumpways` VALUES (NULL, ?, ?, ?)""",
-        jw3="""UPDATE `jumpways` SET `way_name` = ? WHERE `mapname` = ? AND `way_id` = ?""")
+            """       WHERE `jr`.`mapname` = '%s' AND `jr`.`way_id` = '%d' ORDER BY `jr`.`way_time` ASC LIMIT 3""",
+        jr7="""INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
+        jr8="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'"""
+            """       AND `mapname` = '%s' AND `way_id` = '%d'""",
+        jr9="""DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""",
+        jw1="""SELECT * FROM `jumpways` WHERE `mapname` = '%s' AND `way_id` = '%d'""",
+        jw2="""INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
+        jw3="""UPDATE `jumpways` SET `way_name` = '%s' WHERE `mapname` = '%s' AND `way_id` = '%d'""")
 
     _settings = dict(demo_record=True,
                      skip_standard_maps=True,
@@ -580,6 +583,7 @@ class JumperPlugin(b3.plugin.Plugin):
         wi = int(event.data['way_id'])
         wt = int(event.data['way_time'])
         dm = cl.var(self, 'demoname').value
+        dm = dm.replace("'", "\'")
         tm = self.console.time()
 
         # check if the client made his personal record on this map and this way
