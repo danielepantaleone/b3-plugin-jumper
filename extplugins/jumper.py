@@ -91,6 +91,7 @@
 #   - added backward compatibility: support b3 version < 1.10dev
 # 24/03/2014 - 2.22 - Fenix
 #   - changed back SQL queries to use % notation for string substitution
+#
 
 __author__ = 'Fenix'
 __version__ = '2.22'
@@ -108,6 +109,18 @@ import re
 
 from b3.functions import getStuffSoundingLike
 from ConfigParser import NoOptionError
+
+try:
+    # import the getCmd function
+    import b3.functions.getCmd as getCmd
+except ImportError:
+    # keep backward compatibility
+    def getCmd(instance, cmd):
+        cmd = 'cmd_%s' % cmd
+        if hasattr(instance, cmd):
+            func = getattr(instance, cmd)
+            return func
+        return None
 
 
 class JumperPlugin(b3.plugin.Plugin):
@@ -294,7 +307,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 if len(sp) == 2:
                     cmd, alias = sp
 
-                func = self.getCmd(cmd)
+                func = getCmd(self, cmd)
                 if func:
                     self._adminPlugin.registerCommand(self, cmd, level, func, alias)
 
@@ -452,7 +465,6 @@ class JumperPlugin(b3.plugin.Plugin):
         for cl in self.console.clients.getList():
             if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
-
                 self.console.write('stopserverdemo %s' % cl.cid)
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'jumprun', False)
@@ -482,7 +494,6 @@ class JumperPlugin(b3.plugin.Plugin):
         cl = event.client
         if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                 and cl.var(self, 'demoname').value is not None:
-
             # remove the demo file if we got one since the client
             # has disconnected from the server and we don't need it
             self.unLinkDemo(cl.var(self, 'demoname').value)
@@ -492,7 +503,6 @@ class JumperPlugin(b3.plugin.Plugin):
         Handle EVT_CLIENT_TEAM_CHANGE
         """
         if event.data == b3.TEAM_SPEC:
-
             cl = event.client
             if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
@@ -505,13 +515,6 @@ class JumperPlugin(b3.plugin.Plugin):
     ##   FUNCTIONS                                                                                                    ##
     ##                                                                                                                ##
     ####################################################################################################################
-
-    def getCmd(self, cmd):
-        cmd = 'cmd_%s' % cmd
-        if hasattr(self, cmd):
-            func = getattr(self, cmd)
-            return func
-        return None
 
     @staticmethod
     def getDateString(msec):
@@ -539,7 +542,7 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         Retrieve map info from UrTJumpers API
         """
-        mapdata = dict()
+        mapdata = {}
         self.debug('contacting http://api.urtjumpers.com to retrieve maps data...')
 
         try:
