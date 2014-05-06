@@ -91,10 +91,14 @@
 #   - added backward compatibility: support b3 version < 1.10dev
 # 24/03/2014 - 2.22 - Fenix
 #   - changed back SQL queries to use % notation for string substitution
+# 06/05/2014 - 2.23 - Fenix
+#   - rewrite dictionary creation as literals
+#   - minor syntax changes
+#   - added automated tests
 #
 
 __author__ = 'Fenix'
-__version__ = '2.22'
+__version__ = '2.23'
 
 import b3
 import b3.plugin
