@@ -115,7 +115,7 @@ class JumperPlugin(b3.plugin.Plugin):
     _adminPlugin = None
     _poweradminurtPlugin = None
 
-    _map_data = dict()
+    _map_data = {}
 
     _standard_maplist = ['ut4_abbey', 'ut4_abbeyctf', 'ut4_algiers', 'ut4_ambush', 'ut4_austria',
                          'ut4_bohemia', 'ut4_casa', 'ut4_cascade', 'ut4_commune', 'ut4_company', 'ut4_crossing',
@@ -126,39 +126,42 @@ class JumperPlugin(b3.plugin.Plugin):
                          'ut4_suburbs', 'ut4_subway', 'ut4_swim', 'ut4_thingley', 'ut4_tombs', 'ut4_toxic',
                          'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
 
-    _sql = dict(
-        jr1="""SELECT * FROM jumpruns WHERE client_id = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
-        jr2="""SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'""",
-        jr3="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,"""
-            """       `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`"""
-            """       INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`"""
-            """       AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname` WHERE"""
-            """       `jr`.`mapname` = '%s' AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE"""
-            """       `mapname` = '%s' GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC""",
-        jr4="""SELECT `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`, `jr`.`time_edit` AS `time_edit`,"""
-            """       `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM `jumpruns` AS `jr`"""
-            """       LEFT OUTER JOIN  `jumpways` AS `jw` ON  `jr`.`way_id` = `jw`.`way_id`"""
-            """       AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` = '%s' AND `jr`.`mapname` = '%s'"""
-            """       ORDER BY `jr`.`way_id` ASC""",
-        jr5="""SELECT DISTINCT  `way_id` FROM  `jumpruns` WHERE  `mapname` =  '%s' ORDER BY `way_id` ASC""",
-        jr6="""SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,"""
-            """       `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`"""
-            """       INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`"""
-            """       AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname`"""
-            """       WHERE `jr`.`mapname` = '%s' AND `jr`.`way_id` = '%d' ORDER BY `jr`.`way_time` ASC LIMIT 3""",
-        jr7="""INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
-        jr8="""UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'"""
-            """       AND `mapname` = '%s' AND `way_id` = '%d'""",
-        jr9="""DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""",
-        jw1="""SELECT * FROM `jumpways` WHERE `mapname` = '%s' AND `way_id` = '%d'""",
-        jw2="""INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
-        jw3="""UPDATE `jumpways` SET `way_name` = '%s' WHERE `mapname` = '%s' AND `way_id` = '%d'""")
+    _sql = {
+        'jr1': """SELECT * FROM jumpruns WHERE client_id = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
+        'jr2': """SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'""",
+        'jr3': """SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,
+                  `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`
+                  INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`
+                  AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname` WHERE
+                  `jr`.`mapname` = '%s' AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE
+                  `mapname` = '%s' GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC""",
+        'jr4': """SELECT `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`, `jr`.`time_edit` AS `time_edit`,
+                  `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM `jumpruns` AS `jr`
+                  LEFT OUTER JOIN  `jumpways` AS `jw` ON  `jr`.`way_id` = `jw`.`way_id`
+                  AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` = '%s' AND `jr`.`mapname` = '%s'
+                  ORDER BY `jr`.`way_id` ASC""",
+        'jr5': """SELECT DISTINCT  `way_id` FROM  `jumpruns` WHERE  `mapname` =  '%s' ORDER BY `way_id` ASC""",
+        'jr6': """SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,
+                  `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`
+                  INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`
+                  AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname`
+                  WHERE `jr`.`mapname` = '%s' AND `jr`.`way_id` = '%d' ORDER BY `jr`.`way_time` ASC LIMIT 3""",
+        'jr7': """INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
+        'jr8': """UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'
+                  AND `mapname` = '%s' AND `way_id` = '%d'""",
+        'jr9': """DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""",
+        'jw1': """SELECT * FROM `jumpways` WHERE `mapname` = '%s' AND `way_id` = '%d'""",
+        'jw2': """INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
+        'jw3': """UPDATE `jumpways` SET `way_name` = '%s' WHERE `mapname` = '%s' AND `way_id` = '%d'"""
+    }
 
-    _settings = dict(demo_record=True,
-                     skip_standard_maps=True,
-                     min_level_delete=80,
-                     max_cycle_count=5,
-                     cycle_count=0)
+    _settings = {
+        'demo_record': True,
+        'skip_standard_maps': True,
+        'min_level_delete': 80,
+        'max_cycle_count': 5,
+        'cycle_count': 0
+    }
 
     ####################################################################################################################
     ##                                                                                                                ##
@@ -185,28 +188,29 @@ class JumperPlugin(b3.plugin.Plugin):
         self._poweradminurtPlugin = self.console.getPlugin('poweradminurt')
         
         # set default messages
-        self._default_messages = dict(
-            client_record_unknown='''^7no record found for ^3$client ^7on ^3$mapname''',
-            client_record_deleted='''^7removed ^3$num ^7record$plural for ^3$client ^7on ^3$mapname''',
-            client_record_header='''^7listing records for ^3$client ^7on ^3$mapname^7:''',
-            client_record_pattern='''^7[^3$way^7] ^2$time ^7since ^3$date''',
-            map_record_established='''^3$client ^7established a new map record^7!''',
-            map_record_unknown='''^7no record found on ^3$mapname''',
-            map_record_header='''^7listing map records on ^3$mapname^7:''',
-            map_record_pattern='''^7[^3$way^7] ^3$client ^7with ^2$time''',
-            map_toprun_header='''^7listing top runs on ^3$mapname^7:''',
-            map_toprun_pattern='''^7[^3$way^7] #$place ^3$client ^7with ^2$time''',
-            mapinfo_failed='''^7could not query remote server to get map data''',
-            mapinfo_empty='''^7could not find info for map ^1$mapname''',
-            mapinfo_author_unknown='''^7I don't know who created ^3$mapname''',
-            mapinfo_author='''^3$mapname ^7has been created by ^3$author''',
-            mapinfo_released='''^7it has been released on ^3$date''',
-            mapinfo_ways='''^7it's composed of ^3$way ^7way$plural''',
-            mapinfo_jump_ways='''^7it's composed of ^3$jumps ^7jumps and ^3$way ^7way$plural''',
-            mapinfo_level='''^7level: ^3$level^7/^3100''',
-            personal_record_failed='''^7you can do better ^3$client^7...try again!''',
-            personal_record_established='''^7you established a new personal record on ^3$mapname7!''',
-            record_delete_denied='''^7you can't delete ^1$client ^7records''')
+        self._default_messages = {
+            'client_record_unknown': '''^7no record found for ^3$client ^7on ^3$mapname''',
+            'client_record_deleted': '''^7removed ^3$num ^7record$plural for ^3$client ^7on ^3$mapname''',
+            'client_record_header': '''^7listing records for ^3$client ^7on ^3$mapname^7:''',
+            'client_record_pattern': '''^7[^3$way^7] ^2$time ^7since ^3$date''',
+            'map_record_established': '''^3$client ^7established a new map record^7!''',
+            'map_record_unknown': '''^7no record found on ^3$mapname''',
+            'map_record_header': '''^7listing map records on ^3$mapname^7:''',
+            'map_record_pattern': '''^7[^3$way^7] ^3$client ^7with ^2$time''',
+            'map_toprun_header': '''^7listing top runs on ^3$mapname^7:''',
+            'map_toprun_pattern': '''^7[^3$way^7] #$place ^3$client ^7with ^2$time''',
+            'mapinfo_failed': '''^7could not query remote server to get map data''',
+            'mapinfo_empty': '''^7could not find info for map ^1$mapname''',
+            'mapinfo_author_unknown': '''^7I don't know who created ^3$mapname''',
+            'mapinfo_author': '''^3$mapname ^7has been created by ^3$author''',
+            'mapinfo_released': '''^7it has been released on ^3$date''',
+            'mapinfo_ways': '''^7it's composed of ^3$way ^7way$plural''',
+            'mapinfo_jump_ways': '''^7it's composed of ^3$jumps ^7jumps and ^3$way ^7way$plural''',
+            'mapinfo_level': '''^7level: ^3$level^7/^3100''',
+            'personal_record_failed': '''^7you can do better ^3$client^7...try again!''',
+            'personal_record_established': '''^7you established a new personal record on ^3$mapname7!''',
+            'record_delete_denied': '''^7you can't delete ^1$client ^7records'''
+        }
 
         # override parser functions
         self.console.getMapsSoundingLike = self.getMapsSoundingLike
@@ -219,7 +223,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self._poweradminurtPlugin.cmd_pasetnextmap = self.cmd_pasetnextmap
      
     def onLoadConfig(self):
-        """\
+        """
         Load plugin configuration
         """
         try:
@@ -254,7 +258,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.debug('using default value (%s) for settings/minleveldelete' % self._settings['min_level_delete'])
 
     def onStartup(self):
-        """\
+        """
         Initialize plugin settings
         """
         # create database tables if needed
@@ -318,7 +322,7 @@ class JumperPlugin(b3.plugin.Plugin):
         self.debug('plugin started')
 
     def onDisable(self):
-        """\
+        """
         Called when the plugin is disabled
         """
         # remove all the demo files
@@ -331,7 +335,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 cl.setvar(self, 'jumprun', False)
 
     def onEnable(self):
-        """\
+        """
         Called when the plugin is enabled
         """
         if self._settings['skip_standard_maps']:
@@ -349,7 +353,7 @@ class JumperPlugin(b3.plugin.Plugin):
     ####################################################################################################################
 
     def onEvent(self, event):
-        """\
+        """
         Old event system dispatcher
         """
         if event.type == self.console.getEventID('EVT_CLIENT_JUMP_RUN_START'):
@@ -366,7 +370,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.onRoundStart(event)
 
     def onJumpRunStart(self, event):
-        """\
+        """
         Handle EVT_CLIENT_JUMP_RUN_START
         """
         cl = event.client
@@ -394,7 +398,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 cl.setvar(self, 'demoname', None)
 
     def onJumpRunCancel(self, event):
-        """\
+        """
         Handle EVT_CLIENT_JUMP_RUN_CANCEL
         """
         cl = event.client
@@ -406,7 +410,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.unLinkDemo(cl.var(self, 'demoname').value)
 
     def onJumpRunStop(self, event):
-        """\
+        """
         Handle EVT_CLIENT_JUMP_RUN_STOP
         """
         cl = event.client
@@ -440,7 +444,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cl.message(self.getMessage('personal_record_established', {'mapname': self.console.game.mapName}))
 
     def onRoundStart(self, event):
-        """\
+        """
         Handle EVT_GAME_ROUND_START
         """
         # remove all the demo files, no matter if this map
@@ -472,7 +476,7 @@ class JumperPlugin(b3.plugin.Plugin):
         self._map_data = self.getMapData()
 
     def onDisconnect(self, event):
-        """\
+        """
         Handle EVT_CLIENT_DISCONNECT
         """
         cl = event.client
@@ -484,7 +488,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.unLinkDemo(cl.var(self, 'demoname').value)
 
     def onTeamChange(self, event):
-        """\
+        """
         Handle EVT_CLIENT_TEAM_CHANGE
         """
         if event.data == b3.TEAM_SPEC:
@@ -492,7 +496,6 @@ class JumperPlugin(b3.plugin.Plugin):
             cl = event.client
             if self._settings['demo_record'] and cl.var(self, 'jumprun').value \
                     and cl.var(self, 'demoname').value is not None:
-
                 self.console.write('stopserverdemo %s' % cl.cid)
                 self.unLinkDemo(cl.var(self, 'demoname').value)
                 cl.setvar(self, 'jumprun', False)
@@ -512,7 +515,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
     @staticmethod
     def getDateString(msec):
-        """\
+        """
         Return a date string ['Thu, 28 Jun 2001']
         """
         gmtime = time.gmtime(msec)
@@ -520,7 +523,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
     @staticmethod
     def getTimeString(msec):
-        """\
+        """
         Return a time string given it's value
         expressed in milliseconds [H:mm:ss:ms]
         """
@@ -533,7 +536,7 @@ class JumperPlugin(b3.plugin.Plugin):
         return "%01d:%02d:%02d.%03d" % (hour, mins, secs, msec)
 
     def getMapData(self):
-        """\
+        """
         Retrieve map info from UrTJumpers API
         """
         mapdata = dict()
@@ -552,7 +555,7 @@ class JumperPlugin(b3.plugin.Plugin):
         return mapdata
 
     def getMapsFromListSoundingLike(self, mapname):
-        """\
+        """
         Return a list of maps matching the given search key
         The search is performed on the maplist retrieved from the API
         """
@@ -572,7 +575,7 @@ class JumperPlugin(b3.plugin.Plugin):
         return matches
 
     def isPersonalRecord(self, event):
-        """\
+        """
         Return True if the client established his new personal record
         on this map and on the given way_id, False otherwise. The function will
         also update values in the database and perform some other operations
@@ -610,7 +613,7 @@ class JumperPlugin(b3.plugin.Plugin):
         return False
 
     def isMapRecord(self, event):
-        """\
+        """
         Return True if the client established a new absolute record
         on this map and on the given way_id, False otherwise
         """
@@ -629,7 +632,7 @@ class JumperPlugin(b3.plugin.Plugin):
         return False
 
     def unLinkDemo(self, filename):
-        """\
+        """
         Remove a server side demo file
         """
         if self.console.game.fs_game is None:
@@ -686,7 +689,7 @@ class JumperPlugin(b3.plugin.Plugin):
     ####################################################################################################################
 
     def getMapsSoundingLike(self, mapname):
-        """\
+        """
         Return a valid mapname.
         If no exact match is found, then return close candidates as a list
         """
@@ -726,7 +729,7 @@ class JumperPlugin(b3.plugin.Plugin):
     ####################################################################################################################
 
     def cmd_jmprecord(self, data, client, cmd=None):
-        """\
+        """
         [<client>] [<mapname>] - display the best run(s) of a client on a specific map
         """
         cl = client
@@ -770,7 +773,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cu.close()
 
     def cmd_jmpmaprecord(self, data, client, cmd=None):
-        """\
+        """
         [<mapname>] - display map best jump run(s)
         """
         mp = self.console.game.mapName
@@ -807,7 +810,7 @@ class JumperPlugin(b3.plugin.Plugin):
         cu.close()
 
     def cmd_jmptopruns(self, data, client, cmd=None):
-        """\
+        """
         [<mapname>] - display map top runs
         """
         mp = self.console.game.mapName
@@ -853,7 +856,7 @@ class JumperPlugin(b3.plugin.Plugin):
         c1.close()
 
     def cmd_jmpdelrecord(self, data, client, cmd=None):
-        """\
+        """
         [<client>] [<mapname>] - delete the best run(s) of a client on a specific map
         """
         cl = client
@@ -907,7 +910,7 @@ class JumperPlugin(b3.plugin.Plugin):
                                                                           'mapname': mp}))
 
     def cmd_jmpmapinfo(self, data, client, cmd=None):
-        """\
+        """
         [<mapname>] - display map specific informations
         """
         if not self._map_data:
@@ -970,7 +973,7 @@ class JumperPlugin(b3.plugin.Plugin):
             cmd.sayLoudOrPM(client, self.getMessage('mapinfo_level', {'level': l}))
 
     def cmd_jmpsetway(self, data, client, cmd=None):
-        """\
+        """
         <way-id> <name> - set a name for the specified way id
         """
         if not data:
@@ -1008,7 +1011,7 @@ class JumperPlugin(b3.plugin.Plugin):
     ####################################################################################################################
 
     def cmd_map(self, data, client, cmd=None):
-        """\
+        """
         <map> - switch current map
         """
         if not data:
@@ -1030,7 +1033,7 @@ class JumperPlugin(b3.plugin.Plugin):
         client.message('^7could not find any map matching ^1%s' % data)
 
     def cmd_pasetnextmap(self, data, client=None, cmd=None):
-        """\
+        """
         <mapname> - Set the nextmap (partial map name works)
         """
         if not data:
@@ -1053,7 +1056,7 @@ class JumperPlugin(b3.plugin.Plugin):
         client.message('^7could not find any map matching ^1%s' % data)
 
     def cmd_maps(self, data, client=None, cmd=None):
-        """\
+        """
         List the server map rotation
         """
         if not self._adminPlugin.aquireCmdLock(cmd, client, 60, True):
