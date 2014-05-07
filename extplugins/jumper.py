@@ -94,6 +94,7 @@
 # 06/05/2014 - 2.23 - Fenix
 #   - rewrite dictionary creation as literals
 #   - minor syntax changes
+#   - added sqlite compatibility
 #   - added automated tests
 #
 
@@ -144,32 +145,64 @@ class JumperPlugin(b3.plugin.Plugin):
                          'ut4_tunis', 'ut4_turnpike', 'ut4_uptown']
 
     _sql = {
-        'jr1': """SELECT * FROM jumpruns WHERE client_id = '%s' AND `mapname` = '%s' AND `way_id` = '%d'""",
-        'jr2': """SELECT * FROM `jumpruns` WHERE `mapname` = '%s' AND `way_id` = '%d' AND `way_time` < '%d'""",
-        'jr3': """SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,
-                  `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`
-                  INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`
-                  AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname` WHERE
-                  `jr`.`mapname` = '%s' AND `jr`.`way_time` IN (SELECT MIN(`way_time`) FROM `jumpruns` WHERE
-                  `mapname` = '%s' GROUP BY  `way_id`) ORDER BY  `jr`.`way_id` ASC""",
-        'jr4': """SELECT `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`, `jr`.`time_edit` AS `time_edit`,
-                  `jr`.`demo` AS `demo`, `jw`.`way_name` AS `way_name` FROM `jumpruns` AS `jr`
-                  LEFT OUTER JOIN  `jumpways` AS `jw` ON  `jr`.`way_id` = `jw`.`way_id`
-                  AND `jr`.`mapname` = `jw`.`mapname` WHERE `jr`.`client_id` = '%s' AND `jr`.`mapname` = '%s'
-                  ORDER BY `jr`.`way_id` ASC""",
-        'jr5': """SELECT DISTINCT  `way_id` FROM  `jumpruns` WHERE  `mapname` =  '%s' ORDER BY `way_id` ASC""",
-        'jr6': """SELECT `cl`.`name` AS `name`, `jr`.`way_id` AS `way_id`, `jr`.`way_time` AS `way_time`,
-                  `jr`.`time_edit` AS `time_edit`, `jw`.`way_name` AS `way_name` FROM `clients` AS `cl`
-                  INNER JOIN `jumpruns` AS `jr` ON `cl`.`id` = `jr`.`client_id` LEFT OUTER JOIN `jumpways`
-                  AS `jw` ON `jr`.`way_id` = `jw`.`way_id` AND `jr`.`mapname` = `jw`.`mapname`
-                  WHERE `jr`.`mapname` = '%s' AND `jr`.`way_id` = '%d' ORDER BY `jr`.`way_time` ASC LIMIT 3""",
-        'jr7': """INSERT INTO `jumpruns` VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
-        'jr8': """UPDATE `jumpruns` SET `way_time` = '%d', `time_edit` = '%d', `demo` = '%s' WHERE `client_id` = '%s'
-                  AND `mapname` = '%s' AND `way_id` = '%d'""",
-        'jr9': """DELETE FROM `jumpruns` WHERE `client_id` = '%s' AND `mapname` = '%s'""",
-        'jw1': """SELECT * FROM `jumpways` WHERE `mapname` = '%s' AND `way_id` = '%d'""",
-        'jw2': """INSERT INTO `jumpways` VALUES (NULL, '%s', '%d', '%s')""",
-        'jw3': """UPDATE `jumpways` SET `way_name` = '%s' WHERE `mapname` = '%s' AND `way_id` = '%d'"""
+        'jr1': """SELECT * FROM jumpruns WHERE client_id = '%s' AND mapname = '%s' AND way_id = '%d'""",
+        'jr2': """SELECT * FROM jumpruns WHERE mapname = '%s' AND way_id = '%d' AND way_time < '%d'""",
+        'jr3': """SELECT cl.name AS name, jr.way_id AS way_id, jr.way_time AS way_time,
+                  jr.time_edit AS time_edit, jw.way_name AS way_name FROM clients AS cl
+                  INNER JOIN jumpruns AS jr ON cl.id = jr.client_id LEFT OUTER JOIN jumpways
+                  AS jw ON jr.way_id = jw.way_id AND jr.mapname = jw.mapname WHERE
+                  jr.mapname = '%s' AND jr.way_time IN (SELECT MIN(way_time) FROM jumpruns WHERE
+                  mapname = '%s' GROUP BY  way_id) ORDER BY  jr.way_id ASC""",
+        'jr4': """SELECT jr.way_id AS way_id, jr.way_time AS way_time, jr.time_edit AS time_edit,
+                  jr.demo AS demo, jw.way_name AS way_name FROM jumpruns AS jr
+                  LEFT OUTER JOIN  jumpways AS jw ON  jr.way_id = jw.way_id
+                  AND jr.mapname = jw.mapname WHERE jr.client_id = '%s' AND jr.mapname = '%s'
+                  ORDER BY jr.way_id ASC""",
+        'jr5': """SELECT DISTINCT  way_id FROM  jumpruns WHERE  mapname =  '%s' ORDER BY way_id ASC""",
+        'jr6': """SELECT cl.name AS name, jr.way_id AS way_id, jr.way_time AS way_time,
+                  jr.time_edit AS time_edit, jw.way_name AS way_name FROM clients AS cl
+                  INNER JOIN jumpruns AS jr ON cl.id = jr.client_id LEFT OUTER JOIN jumpways
+                  AS jw ON jr.way_id = jw.way_id AND jr.mapname = jw.mapname
+                  WHERE jr.mapname = '%s' AND jr.way_id = '%d' ORDER BY jr.way_time ASC LIMIT 3""",
+        'jr7': """INSERT INTO jumpruns VALUES (NULL, '%s', '%s', '%d', '%d', '%d', '%d', '%s')""",
+        'jr8': """UPDATE jumpruns SET way_time = '%d', time_edit = '%d', demo = '%s' WHERE client_id = '%s'
+                  AND mapname = '%s' AND way_id = '%d'""",
+        'jr9': """DELETE FROM jumpruns WHERE client_id = '%s' AND mapname = '%s'""",
+        'jw1': """SELECT * FROM jumpways WHERE mapname = '%s' AND way_id = '%d'""",
+        'jw2': """INSERT INTO jumpways VALUES (NULL, '%s', '%d', '%s')""",
+        'jw3': """UPDATE jumpways SET way_name = '%s' WHERE mapname = '%s' AND way_id = '%d'""",
+        'my1': """CREATE TABLE IF NOT EXISTS jumpruns (
+                      id int(10) unsigned NOT NULL AUTO_INCREMENT,
+                      client_id int(10) unsigned NOT NULL,
+                      mapname varchar(64) NOT NULL,
+                      way_id int(3) NOT NULL,
+                      way_time int(10) unsigned NOT NULL,
+                      time_add int(10) unsigned NOT NULL,
+                      time_edit int(10) unsigned NOT NULL,
+                      demo varchar(128) DEFAULT NULL,
+                      PRIMARY KEY (id)
+                  ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;""",
+        'my2': """CREATE TABLE IF NOT EXISTS jumpways (
+                      id int(10) NOT NULL AUTO_INCREMENT,
+                      mapname varchar(64) NOT NULL,
+                      way_id int(3) NOT NULL,
+                      way_name varchar(64) NOT NULL,
+                      PRIMARY KEY (id)
+                  ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;""",
+        'sq1': """CREATE TABLE IF NOT EXISTS jumpruns (
+                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      client_id INTEGER(10) NOT NULL,
+                      mapname VARCHAR(64) NOT NULL,
+                      way_id INTEGER(3) NOT NULL,
+                      way_time INTEGER(10) NOT NULL,
+                      time_add INTEGER(10) NOT NULL,
+                      time_edit INTEGER(10) NOT NULL,
+                      demo VARCHAR(128) DEFAULT NULL);""",
+        'sq2': """CREATE TABLE IF NOT EXISTS jumpways (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  mapname VARCHAR(64) NOT NULL,
+                  way_id INTEGER(3) NOT NULL,
+                  way_name VARCHAR(64) NOT NULL);"""
     }
 
     _settings = {
@@ -280,27 +313,18 @@ class JumperPlugin(b3.plugin.Plugin):
         """
         # create database tables if needed
         tables = self.console.storage.getTables()
+
         if not 'jumpruns' in tables:
-            self.console.storage.query("""CREATE TABLE IF NOT EXISTS `jumpruns` (
-                                          `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                                          `client_id` int(10) unsigned NOT NULL,
-                                          `mapname` varchar(64) NOT NULL,
-                                          `way_id` int(3) NOT NULL,
-                                          `way_time` int(10) unsigned NOT NULL,
-                                          `time_add` int(10) unsigned NOT NULL,
-                                          `time_edit` int(10) unsigned NOT NULL,
-                                          `demo` varchar(128) DEFAULT NULL,
-                                          PRIMARY KEY (`id`)
-                                          ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;""")
+            if self.console.storage.dsnDict['protocol'] == 'mysql':
+                self.console.storage.query(self._sql['my1'])
+            else:
+                self.console.storage.query(self._sql['sq1'])
 
         if not 'jumpways' in tables:
-            self.console.storage.query("""CREATE TABLE IF NOT EXISTS `jumpways` (
-                                          `id` int(10) NOT NULL AUTO_INCREMENT,
-                                          `mapname` varchar(64) NOT NULL,
-                                          `way_id` int(3) NOT NULL,
-                                          `way_name` varchar(64) NOT NULL,
-                                          PRIMARY KEY (`id`)
-                                          ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;""")
+            if self.console.storage.dsnDict['protocol'] == 'mysql':
+                self.console.storage.query(self._sql['my2'])
+            else:
+                self.console.storage.query(self._sql['sq2'])
 
         # register our commands
         if 'commands' in self.config.sections():
