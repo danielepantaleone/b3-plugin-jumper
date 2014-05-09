@@ -10,7 +10,7 @@ possibility to list player and map records.
 Download
 --------
 
-Latest version avaiable [here](https://github.com/FenixXx/b3-plugin-jumper/archive/master.zip).
+Latest version available [here](https://github.com/FenixXx/b3-plugin-jumper/archive/master.zip).
 
 Installation
 ------------
