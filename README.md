@@ -1,7 +1,8 @@
 Jumper Plugin for BigBrotherBot [![BigBrotherBot](http://i.imgur.com/7sljo4G.png)][B3]
 ===============================
 
-## Description
+Description
+-----------
 
 A [BigBrotherBot][B3] plugin provides an advanced statistics system for Urban Terror 4.2 Jump servers.
 The plugin is capable of storing permanently all the timings performed during jump runs, offering also the
@@ -52,7 +53,6 @@ Credits
 Since version 2.1 this plugin provides a new command, **!jmpmapinfo**, which retrieves maps information (such as
 author, release date, level, etc.) and display them in-game. This has been made possible thanks to the
 [Urt Jumpers](http://www.urtjumpers.com/) community which provides such data.
-
 
 Support
 -------
