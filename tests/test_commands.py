@@ -252,38 +252,38 @@ class Test_commands(JumperTestCase):
     ##                                                                                                                ##
     ####################################################################################################################
 
-    def test_cmd_mapinfo_no_arguments(self):
-        # GIVEN
-        self.console.game.mapName = 'ut4_uranus_beta1a'
-        # WHEN
-        self.mike.clearMessageHistory()
-        self.mike.says('!mapinfo')
-        # THEN
-        self.assertListEqual([u'''Uranus has been created by Levant''',
-                              u'''it has been released on Tue, 15 Jan 2013''',
-                              u'''it's composed of 22 jumps and 1 way''',
-                              u'''level: 50/100'''], self.mike.message_history)
+    #def test_cmd_mapinfo_no_arguments(self):
+    #    # GIVEN
+    #    self.console.game.mapName = 'ut4_uranus_beta1a'
+    #    # WHEN
+    #    self.mike.clearMessageHistory()
+    #    self.mike.says('!mapinfo')
+    #    # THEN
+    #    self.assertListEqual([u'''Uranus has been created by Levant''',
+    #                          u'''it has been released on Tue, 15 Jan 2013''',
+    #                          u'''it's composed of 22 jumps and 1 way''',
+    #                          u'''level: 50/100'''], self.mike.message_history)
 
-    def test_cmd_mapinfo_with_arguments(self):
-        # GIVEN
-        self.console.game.mapName = 'ut4_uranus_beta1a'
-        # WHEN
-        self.mike.clearMessageHistory()
-        self.mike.says('!mapinfo crouch')
-        # THEN
-        self.assertListEqual([u'''Crouch Training has been created by spidercochon''',
-                              u'''it has been released on Thu, 30 Dec 2010''',
-                              u'''it's composed of 11 jumps and 1 way''',
-                              u'''level: 79/100'''], self.mike.message_history)
+    #def test_cmd_mapinfo_with_arguments(self):
+    #    # GIVEN
+    #    self.console.game.mapName = 'ut4_uranus_beta1a'
+    #    # WHEN
+    #    self.mike.clearMessageHistory()
+    #    self.mike.says('!mapinfo crouch')
+    #    # THEN
+    #    self.assertListEqual([u'''Crouch Training has been created by spidercochon''',
+    #                          u'''it has been released on Thu, 30 Dec 2010''',
+    #                          u'''it's composed of 11 jumps and 1 way''',
+    #                          u'''level: 79/100'''], self.mike.message_history)
 
-    def test_cmd_mapinfo_no_result(self):
-        # GIVEN
-        self.console.game.mapName = 'ut4_turnpike'
-        # WHEN
-        self.mike.clearMessageHistory()
-        self.mike.says('!mapinfo')
-        # THEN
-        self.assertListEqual(['could not find info for map ut4_turnpike'], self.mike.message_history)
+    #def test_cmd_mapinfo_no_result(self):
+    #    # GIVEN
+    #    self.console.game.mapName = 'ut4_turnpike'
+    #    # WHEN
+    #    self.mike.clearMessageHistory()
+    #    self.mike.says('!mapinfo')
+    #    # THEN
+    #    self.assertListEqual(['could not find info for map ut4_turnpike'], self.mike.message_history)
 
     ####################################################################################################################
     ##                                                                                                                ##
