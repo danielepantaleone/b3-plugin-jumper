@@ -20,11 +20,12 @@ import unittest2
 
 from b3 import TEAM_FREE
 from b3 import TEAM_SPEC
+from b3.update import B3version
+from b3 import __version__ as b3_version
+from b3.events import Event
 from jumper import JumpRun
 from tests import logging_disabled
 from tests import JumperTestCase
-from b3.update import B3version
-from b3 import __version__ as b3_version
 
 if B3version(b3_version) >= B3version("1.10dev"):
     HAS_ENABLE_DISABLE_HOOKS = True
@@ -62,7 +63,8 @@ class Test_events(JumperTestCase):
 
     def test_event_client_jumprun_started(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
+        event = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        self.console.queueEvent(Event(event, client=self.mike, data={'way_id' : '1'}))
         # THEN
         self.assertEqual(True, self.mike.isvar(self.p, 'jumprun'))
         self.assertIsNone(self.mike.var(self.p, 'jumprun').value.demo)
@@ -70,40 +72,48 @@ class Test_events(JumperTestCase):
 
     def test_event_client_jumprun_stopped(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStopped: 1 - way: 1 - time: 12345''')
+        event = self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP')
+        self.console.queueEvent(Event(event, client=self.mike, data={'way_id' : '1', 'way_time' : '12345'}))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertListEqual([], self.p.getClientRecords(self.mike, self.console.game.mapName))
 
     def test_event_client_jumprun_canceled(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunCanceled: 1 - way: 1''')
+        event = self.console.getEventID('EVT_CLIENT_JUMP_RUN_CANCEL')
+        self.console.queueEvent(Event(event, client=self.mike, data={'way_id' : '1'}))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertListEqual([], self.p.getClientRecords(self.mike, self.console.game.mapName))
 
     def test_event_client_jumprun_started_stopped(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStopped: 1 - way: 1 - time: 12345''')
+        event1 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        event2 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP')
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, client=self.mike, data={'way_id' : '1', 'way_time' : '12345'}))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertEqual(1, len(self.p.getClientRecords(self.mike, self.console.game.mapName)))
 
     def test_event_client_jumprun_started_canceled(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientJumpRunCanceled: 1 - way: 1''')
+        event1 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        event2 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_CANCEL')
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, client=self.mike, data={'way_id' : '1'}))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertEqual(0, len(self.p.getClientRecords(self.mike, self.console.game.mapName)))
 
     def test_event_client_jumprun_started_stopped_multiple_clients(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStopped: 1 - way: 1 - time: 12345''')
-        self.console.parseLine('''ClientJumpRunStarted: 2 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStopped: 2 - way: 1 - time: 12345''')
+        event1 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        event2 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP')
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, client=self.mike, data={'way_id' : '1', 'way_time' : '12345'}))
+        self.console.queueEvent(Event(event1, client=self.bill, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, client=self.bill, data={'way_id' : '1', 'way_time' : '12345'}))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertEqual(False, self.bill.isvar(self.p, 'jumprun'))
@@ -112,24 +122,28 @@ class Test_events(JumperTestCase):
 
     def test_event_client_jumprun_started_stopped_multiple_ways(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStopped: 1 - way: 1 - time: 12345''')
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 2''')
-        self.console.parseLine('''ClientJumpRunStopped: 1 - way: 2 - time: 12345''')
+        event1 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        event2 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP')
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, client=self.mike, data={'way_id' : '1', 'way_time' : '12345'}))
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '2'}))
+        self.console.queueEvent(Event(event2, client=self.mike, data={'way_id' : '2', 'way_time' : '12345'}))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertEqual(2, len(self.p.getClientRecords(self.mike, self.console.game.mapName)))
 
     def test_event_client_jumprun_started_stopped_multiple_clients_multiple_ways(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStopped: 1 - way: 1 - time: 12345''')
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 2''')
-        self.console.parseLine('''ClientJumpRunStopped: 1 - way: 2 - time: 12345''')
-        self.console.parseLine('''ClientJumpRunStarted: 2 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStopped: 2 - way: 1 - time: 12345''')
-        self.console.parseLine('''ClientJumpRunStarted: 2 - way: 2''')
-        self.console.parseLine('''ClientJumpRunStopped: 2 - way: 2 - time: 12345''')
+        event1 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        event2 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP')
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, client=self.mike, data={'way_id' : '1', 'way_time' : '12345'}))
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '2'}))
+        self.console.queueEvent(Event(event2, client=self.mike, data={'way_id' : '2', 'way_time' : '12345'}))
+        self.console.queueEvent(Event(event1, client=self.bill, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, client=self.bill, data={'way_id' : '1', 'way_time' : '12345'}))
+        self.console.queueEvent(Event(event1, client=self.bill, data={'way_id' : '2'}))
+        self.console.queueEvent(Event(event2, client=self.bill, data={'way_id' : '2', 'way_time' : '12345'}))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertEqual(False, self.bill.isvar(self.p, 'jumprun'))
@@ -144,9 +158,11 @@ class Test_events(JumperTestCase):
 
     def test_event_round_start(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStarted: 2 - way: 1''')
-        self.console.parseLine('''InitGame: \sv_allowdownload\0\g_matchmode\0\g_gametype\9\sv_maxclients\32\sv_floodprotect\1''')
+        event1 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        event2 = self.console.getEventID('EVT_GAME_ROUND_START')
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event1, client=self.bill, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, data='\sv_allowdownload\0\g_matchmode\0\g_gametype\9\sv_maxclients\32\sv_floodprotect\1'))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertEqual(False, self.bill.isvar(self.p, 'jumprun'))
@@ -155,15 +171,18 @@ class Test_events(JumperTestCase):
 
     def test_event_client_disconnect(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientDisconnect: 1''')
+        event1 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        event2 = self.console.getEventID('EVT_CLIENT_DISCONNECT')
+        self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event2, client=self.mike, data=None))
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
 
     def test_event_client_team_change(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStarted: 2 - way: 1''')
+        event = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        self.console.queueEvent(Event(event, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event, client=self.bill, data={'way_id' : '1'}))
         self.mike.team = TEAM_SPEC  # will raise EVT_CLIENT_TEAM_CHANGE
         self.bill.team = TEAM_FREE  # will not raise EVT_CLIENT_TEAM_CHANGE
         # THEN
@@ -179,17 +198,18 @@ class Test_events(JumperTestCase):
     ##                                                                                                                ##
     ####################################################################################################################
 
-    @unittest2.skipUnless(HAS_ENABLE_DISABLE_HOOKS, "B3 %s does provide onEnable() and onDisabled() hooks" % b3_version)
+    @unittest2.skipUnless(HAS_ENABLE_DISABLE_HOOKS, "B3 %s doesn't provide onDisabled() plugin hook" % b3_version)
     def test_plugin_disable(self):
         # WHEN
-        self.console.parseLine('''ClientJumpRunStarted: 1 - way: 1''')
-        self.console.parseLine('''ClientJumpRunStarted: 2 - way: 1''')
+        event = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
+        self.console.queueEvent(Event(event, client=self.mike, data={'way_id' : '1'}))
+        self.console.queueEvent(Event(event, client=self.bill, data={'way_id' : '1'}))
         self.p.disable()
         # THEN
         self.assertEqual(False, self.mike.isvar(self.p, 'jumprun'))
         self.assertEqual(False, self.bill.isvar(self.p, 'jumprun'))
 
-    @unittest2.skipUnless(HAS_ENABLE_DISABLE_HOOKS, "B3 %s does provide onEnable() and onDisabled() hooks" % b3_version)
+    @unittest2.skipUnless(HAS_ENABLE_DISABLE_HOOKS, "B3 %s doesn't provide onEnable() plugin hook" % b3_version)
     def test_plugin_enable(self):
         # GIVEN
         self.p.disable()
