@@ -1272,7 +1272,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         match = self.getMapsSoundingLike(data)
         if isinstance(match, list):
-            client.message('^7do you mean: ^3%s?' % ', '.join(match[:5]))
+            client.message('^7do you mean: %s?' % ', '.join(match[:5]))
             return
 
         if isinstance(match, basestring):
@@ -1294,7 +1294,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         match = self.getMapsSoundingLike(data)
         if isinstance(match, list):
-            client.message('^7do you mean: ^3%s?' % ', '.join(match[:5]))
+            client.message('^7do you mean: %s?' % ', '.join(match[:5]))
             return
 
         if isinstance(match, basestring):
@@ -1336,4 +1336,4 @@ class JumperPlugin(b3.plugin.Plugin):
             return
             
         # display the map rotation
-        cmd.sayLoudOrPM(client, '^7map rotation: ^3%s' % ', '.join(maplist))
+        cmd.sayLoudOrPM(client, '^7map rotation: %s' % ', '.join(maplist))
