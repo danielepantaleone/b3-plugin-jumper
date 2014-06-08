@@ -730,6 +730,7 @@ class JumperPlugin(b3.plugin.Plugin):
 
         if self.settings['skip_standard_maps']:
             mapname = self.console.game.mapName
+            mapname = mapname.lower()
             if mapname in self.standard_maplist:
                 # endless loop protection
                 if self.settings['cycle_count'] < self.settings['max_cycle_count']:
