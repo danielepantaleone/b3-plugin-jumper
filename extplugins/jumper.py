@@ -1264,12 +1264,12 @@ class JumperPlugin(b3.plugin.Plugin):
         <map> - switch current map
         """
         if not data:
-            client.message('missing data, try ^3!^7help map')
+            client.message('^7missing data, try ^3!^7help map')
             return
 
         match = self.getMapsSoundingLike(data)
         if isinstance(match, list):
-            client.message('do you mean: ^3%s?' % '^7, ^3'.join(match[:5]))
+            client.message('^7do you mean: ^3%s?' % ', '.join(match[:5]))
             return
 
         if isinstance(match, basestring):
@@ -1286,12 +1286,12 @@ class JumperPlugin(b3.plugin.Plugin):
         <mapname> - Set the nextmap (partial map name works)
         """
         if not data:
-            client.message('missing data, try ^3!^7help pasetnextmap')
+            client.message('^7missing data, try ^3!^7help pasetnextmap')
             return
 
         match = self.getMapsSoundingLike(data)
         if isinstance(match, list):
-            client.message('do you mean: ^3%s?' % '^7, ^3'.join(match[:5]))
+            client.message('^7do you mean: ^3%s?' % ', '.join(match[:5]))
             return
 
         if isinstance(match, basestring):
@@ -1333,4 +1333,4 @@ class JumperPlugin(b3.plugin.Plugin):
             return
             
         # display the map rotation
-        cmd.sayLoudOrPM(client, '^7map rotation: ^3%s' % '^7, ^3'.join(maplist))
+        cmd.sayLoudOrPM(client, '^7map rotation: ^3%s' % ', '.join(maplist))
