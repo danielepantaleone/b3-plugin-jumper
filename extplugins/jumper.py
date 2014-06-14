@@ -591,13 +591,13 @@ class JumperPlugin(b3.plugin.Plugin):
         try:
             # override !maps command
             self.adminPlugin._commands['maps'].plugin = self
-            self.adminPlugin._commands['maps'].func = self.cmd_map
-            self.adminPlugin._commands['maps'].help = self.cmd_map.__doc__
+            self.adminPlugin._commands['maps'].func = self.cmd_maps
+            self.adminPlugin._commands['maps'].help = self.cmd_maps.__doc__
             alias = self.adminPlugin._commands['maps'].alias
             if alias and alias in self.adminPlugin._commands.keys():
                 self.adminPlugin._commands[alias].plugin = self
-                self.adminPlugin._commands[alias].func = self.cmd_map
-                self.adminPlugin._commands[alias].help = self.cmd_map.__doc__
+                self.adminPlugin._commands[alias].func = self.cmd_maps
+                self.adminPlugin._commands[alias].help = self.cmd_maps.__doc__
         except KeyError:
             self.debug('not overriding command !maps: it has not been registered by the Admin plugin')
             pass
@@ -626,8 +626,8 @@ class JumperPlugin(b3.plugin.Plugin):
                 alias = self.adminPlugin._commands['pasetnextmap'].alias
                 if alias and alias in self.adminPlugin._commands.keys():
                     self.adminPlugin._commands[alias].plugin = self
-                    self.adminPlugin._commands[alias].func = self.cmd_map
-                    self.adminPlugin._commands[alias].help = self.cmd_map.__doc__
+                    self.adminPlugin._commands[alias].func = self.cmd_pasetnextmap
+                    self.adminPlugin._commands[alias].help = self.cmd_pasetnextmap.__doc__
             except KeyError:
                 self.debug('not overriding command !pasetnextmap: it has not been registered by the PowerAdminUrt plugin')
                 pass
