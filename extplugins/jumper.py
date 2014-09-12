@@ -82,6 +82,7 @@
 #                                 - changed some in-game message patterns
 # 14/06/2014 - 2.25 - Fenix       - add support for command alias overwrite
 # 12/09/2014 - 2.26 - Fenix       - reformat changelog
+#                                 - make use of EVT_GAME_MAP_CHANGE instead of EVT_GAME_ROUND_START
 
 __author__ = 'Fenix'
 __version__ = '2.26'
@@ -615,7 +616,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_CANCEL'), self.onJumpRunCancel)
             self.registerEvent(self.console.getEventID('EVT_CLIENT_TEAM_CHANGE'), self.onTeamChange)
             self.registerEvent(self.console.getEventID('EVT_CLIENT_DISCONNECT'), self.onDisconnect)
-            self.registerEvent(self.console.getEventID('EVT_GAME_ROUND_START'), self.onRoundStart)
+            self.registerEvent(self.console.getEventID('EVT_GAME_MAP_CHANGE'), self.onMapChange)
         except TypeError:
             self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_START'))
             self.registerEvent(self.console.getEventID('EVT_CLIENT_JUMP_RUN_STOP'))
@@ -623,6 +624,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.registerEvent(self.console.getEventID('EVT_CLIENT_TEAM_CHANGE'))
             self.registerEvent(self.console.getEventID('EVT_CLIENT_DISCONNECT'))
             self.registerEvent(self.console.getEventID('EVT_GAME_ROUND_START'))
+            self.registerEvent(self.console.getEventID('EVT_GAME_MAP_CHANGE'))
 
         # make sure to stop all the demos being recorded or the plugin
         # will go out of sync: will not be able to retrieve demos for players
@@ -675,8 +677,8 @@ class JumperPlugin(b3.plugin.Plugin):
             self.onTeamChange(event)
         elif event.type == self.console.getEventID('EVT_CLIENT_DISCONNECT'):
             self.onDisconnect(event)
-        elif event.type == self.console.getEventID('EVT_GAME_ROUND_START'):
-            self.onRoundStart(event)
+        elif event.type == self.console.getEventID('EVT_GAME_MAP_CHANGE'):
+            self.onMapChange(event)
 
     def onJumpRunStart(self, event):
         """
@@ -716,9 +718,30 @@ class JumperPlugin(b3.plugin.Plugin):
             jumprun.stop(int(event.data['way_time']))
             client.delvar(self, 'jumprun')
 
-    def onRoundStart(self, event):
+    def onDisconnect(self, event):
         """
-        Handle EVT_GAME_ROUND_START
+        Handle EVT_CLIENT_DISCONNECT
+        """
+        client = event.client
+        if client.isvar(self, 'jumprun'):
+            jumprun = client.var(self, 'jumprun').value
+            jumprun.unlinkdemo()
+            client.delvar(self, 'jumprun')
+
+    def onTeamChange(self, event):
+        """
+        Handle EVT_CLIENT_TEAM_CHANGE
+        """
+        if event.data == b3.TEAM_SPEC:
+            client = event.client
+            if client.isvar(self, 'jumprun'):
+                jumprun = client.var(self, 'jumprun').value
+                jumprun.cancel()
+                client.delvar(self, 'jumprun')
+
+    def onMapChange(self, event):
+        """
+        Handle EVT_GAME_MAP_CHANGE
         """
         # cancel all the jumpruns
         for client in self.console.clients.getList():
@@ -745,27 +768,6 @@ class JumperPlugin(b3.plugin.Plugin):
 
         self.settings['cycle_count'] = 0
         self.mapsdata = self.getMapsData()
-
-    def onDisconnect(self, event):
-        """
-        Handle EVT_CLIENT_DISCONNECT
-        """
-        client = event.client
-        if client.isvar(self, 'jumprun'):
-            jumprun = client.var(self, 'jumprun').value
-            jumprun.unlinkdemo()
-            client.delvar(self, 'jumprun')
-
-    def onTeamChange(self, event):
-        """
-        Handle EVT_CLIENT_TEAM_CHANGE
-        """
-        if event.data == b3.TEAM_SPEC:
-            client = event.client
-            if client.isvar(self, 'jumprun'):
-                jumprun = client.var(self, 'jumprun').value
-                jumprun.cancel()
-                client.delvar(self, 'jumprun')
 
     ####################################################################################################################
     ##                                                                                                                ##
