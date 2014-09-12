@@ -156,10 +156,10 @@ class Test_events(JumperTestCase):
     ##                                                                                                                ##
     ####################################################################################################################
 
-    def test_event_round_start(self):
+    def test_event_game_map_change(self):
         # WHEN
         event1 = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
-        event2 = self.console.getEventID('EVT_GAME_ROUND_START')
+        event2 = self.console.getEventID('EVT_GAME_MAP_CHANGE')
         self.console.queueEvent(Event(event1, client=self.mike, data={'way_id' : '1'}))
         self.console.queueEvent(Event(event1, client=self.bill, data={'way_id' : '1'}))
         self.console.queueEvent(Event(event2, data='\sv_allowdownload\0\g_matchmode\0\g_gametype\9\sv_maxclients\32\sv_floodprotect\1'))
@@ -213,6 +213,7 @@ class Test_events(JumperTestCase):
     def test_plugin_enable(self):
         # GIVEN
         self.p.disable()
+        self.p.settings['cycle_count'] = 0
         self.console.game.mapName = 'ut4_casa'
         # WHEN
         self.p.enable()

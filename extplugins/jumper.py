@@ -83,6 +83,8 @@
 # 14/06/2014 - 2.25 - Fenix       - add support for command alias overwrite
 # 12/09/2014 - 2.26 - Fenix       - reformat changelog
 #                                 - make use of EVT_GAME_MAP_CHANGE instead of EVT_GAME_ROUND_START
+#                                 - added a function which welcomes players on the new level showing information retrieved
+#                                   from the api (when available)
 
 __author__ = 'Fenix'
 __version__ = '2.26'
@@ -100,6 +102,7 @@ import re
 
 from b3.functions import getStuffSoundingLike
 from ConfigParser import NoOptionError
+from threading import Timer
 
 try:
     # import the getCmd function
@@ -572,7 +575,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.adminPlugin._commands['maps'].func = self.cmd_maps
             self.adminPlugin._commands['maps'].help = self.cmd_maps.__doc__
             alias = self.adminPlugin._commands['maps'].alias
-            if alias and alias in self.adminPlugin._commands.keys():
+            if alias and alias in self.adminPlugin._commands:
                 self.adminPlugin._commands[alias].plugin = self
                 self.adminPlugin._commands[alias].func = self.cmd_maps
                 self.adminPlugin._commands[alias].help = self.cmd_maps.__doc__
@@ -586,7 +589,7 @@ class JumperPlugin(b3.plugin.Plugin):
             self.adminPlugin._commands['map'].func = self.cmd_map
             self.adminPlugin._commands['map'].help = self.cmd_map.__doc__
             alias = self.adminPlugin._commands['map'].alias
-            if alias and alias in self.adminPlugin._commands.keys():
+            if alias and alias in self.adminPlugin._commands:
                 self.adminPlugin._commands[alias].plugin = self
                 self.adminPlugin._commands[alias].func = self.cmd_map
                 self.adminPlugin._commands[alias].help = self.cmd_map.__doc__
@@ -602,7 +605,7 @@ class JumperPlugin(b3.plugin.Plugin):
                 self.adminPlugin._commands['pasetnextmap'].func = self.cmd_pasetnextmap
                 self.adminPlugin._commands['pasetnextmap'].help = self.cmd_pasetnextmap.__doc__
                 alias = self.adminPlugin._commands['pasetnextmap'].alias
-                if alias and alias in self.adminPlugin._commands.keys():
+                if alias and alias in self.adminPlugin._commands:
                     self.adminPlugin._commands[alias].plugin = self
                     self.adminPlugin._commands[alias].func = self.cmd_pasetnextmap
                     self.adminPlugin._commands[alias].help = self.cmd_pasetnextmap.__doc__
@@ -769,6 +772,11 @@ class JumperPlugin(b3.plugin.Plugin):
         self.settings['cycle_count'] = 0
         self.mapsdata = self.getMapsData()
 
+        # welcome the clients on the new level
+        thread = Timer(30.0, self.welcome_clients, (event.data['new'].lower(), self.mapsdata))
+        thread.setDaemon(True)
+        thread.start()
+
     ####################################################################################################################
     ##                                                                                                                ##
     ##   OTHER METHODS                                                                                                ##
@@ -796,6 +804,27 @@ class JumperPlugin(b3.plugin.Plugin):
         hour = mins / 60
         mins -= hour * 60
         return "%01d:%02d:%02d.%03d" % (hour, mins, secs, msec)
+
+    def welcome_clients(self, mapname, mapsdata):
+        """
+        Welcome online players on the new map printing some information
+        """
+        if not mapsdata:
+            self.warning('not welcoming clients on the new level : could not get map data from the api')
+            return
+
+        a = mapsdata[mapname]['mapper']
+        d = mapsdata[mapname]['mdate']
+        t = int(datetime.datetime.strptime(d, '%Y-%m-%d').strftime('%s'))
+        self.console.say('^7Welcome to ^3%s' % mapname)
+
+        if a:
+            cmd = 'jmpmapinfo'
+            alias = self.adminPlugin._commands[cmd].alias
+            if alias and alias in self.adminPlugin._commands:
+                  cmd = alias
+            self.console.say('^7This map has been created by ^3%s ^7on ^3%s' % (a, self.getDateString(t)))
+            self.console.say('^7Type ^4!^7%s in chat to have more information' % cmd)
 
     def getMapsData(self):
         """
@@ -825,12 +854,12 @@ class JumperPlugin(b3.plugin.Plugin):
         mapname = mapname.lower()
 
         # check exact match at first
-        if mapname in self.mapsdata.keys():
+        if mapname in self.mapsdata:
             matches.append(mapname)
             return matches
 
         # check for substring match
-        for key in self.mapsdata.keys():
+        for key in self.mapsdata:
             if mapname in key:
                 matches.append(key)
 
@@ -1024,15 +1053,13 @@ class JumperPlugin(b3.plugin.Plugin):
         records = self.getClientRecords(cl, mp)
         if len(records) == 0:
             cmd.sayLoudOrPM(client, self.getMessage('client_record_unknown', {'client': cl.name,
-                                                                              'id': cl.id,
-                                                                              'mapname': mp}))
+                                                                              'id': cl.id, 'mapname': mp}))
             return
 
         if len(records) > 1:
             # print a sort of a list header so players will know what's going on
             cmd.sayLoudOrPM(client, self.getMessage('client_record_header', {'client': cl.name,
-                                                                             'id': cl.id,
-                                                                             'mapname': mp}))
+                                                                             'id': cl.id, 'mapname': mp}))
 
         for jumprun in records:
             wi = jumprun.way_name if jumprun.way_name else str(jumprun.way_id)
@@ -1068,10 +1095,8 @@ class JumperPlugin(b3.plugin.Plugin):
         for jumprun in records:
             wi = jumprun.way_name if jumprun.way_name else str(jumprun.way_id)
             tm = self.getTimeString(jumprun.way_time)
-            cmd.sayLoudOrPM(client, self.getMessage('map_record_pattern', {'way': wi,
-                                                                           'client': jumprun.client.name,
-                                                                           'id':  jumprun.client.id,
-                                                                           'time': tm}))
+            cmd.sayLoudOrPM(client, self.getMessage('map_record_pattern', {'way': wi, 'client': jumprun.client.name,
+                                                                           'id':  jumprun.client.id, 'time': tm}))
 
     def cmd_jmptopruns(self, data, client, cmd=None):
         """
@@ -1110,11 +1135,9 @@ class JumperPlugin(b3.plugin.Plugin):
             last_way_id = jumprun.way_id
             way_id = jumprun.way_name if jumprun.way_name else str(jumprun.way_id)
             way_time = self.getTimeString(jumprun.way_time)
-            cmd.sayLoudOrPM(client, self.getMessage('map_toprun_pattern', {'way': way_id,
-                                                                           'place': place,
+            cmd.sayLoudOrPM(client, self.getMessage('map_toprun_pattern', {'way': way_id, 'place': place,
                                                                            'client': jumprun.client.name,
-                                                                           'id': jumprun.client.id,
-                                                                           'time': way_time}))
+                                                                           'id': jumprun.client.id, 'time': way_time}))
 
     def cmd_jmpdelrecord(self, data, client, cmd=None):
         """
@@ -1153,11 +1176,8 @@ class JumperPlugin(b3.plugin.Plugin):
 
         num = len(records)
         self.verbose('removed %d record%s for client @%s on %s' % (num, 's' if num > 1 else '', cl.id, mp))
-        cmd.sayLoudOrPM(client, self.getMessage('client_record_deleted', {'num': num,
-                                                                          'plural': 's' if num > 1 else '',
-                                                                          'client': cl.name,
-                                                                          'id': cl.id,
-                                                                          'mapname': mp}))
+        cmd.sayLoudOrPM(client, self.getMessage('client_record_deleted', {'num': num, 'plural': 's' if num > 1 else '',
+                                                                          'client': cl.name, 'id': cl.id, 'mapname': mp}))
 
     def cmd_jmpmapinfo(self, data, client, cmd=None):
         """
