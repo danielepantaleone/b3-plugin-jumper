@@ -24,6 +24,8 @@ from b3.update import B3version
 from b3 import __version__ as b3_version
 from b3.events import Event
 from jumper import JumpRun
+from mock import Mock
+from mockito import when
 from tests import logging_disabled
 from tests import JumperTestCase
 
@@ -40,6 +42,9 @@ class Test_events(JumperTestCase):
 
         with logging_disabled():
             from b3.fake import FakeClient
+
+        # prevent the test to query the api: we handle this somewhere else
+        when(self.p).getMapsData().thenReturn(dict())
 
         # create some clients
         self.mike = FakeClient(console=self.console, name="Mike", guid="mikeguid", team=TEAM_FREE, groupBits=1)
@@ -198,7 +203,7 @@ class Test_events(JumperTestCase):
     ##                                                                                                                ##
     ####################################################################################################################
 
-    @unittest2.skipUnless(HAS_ENABLE_DISABLE_HOOKS, "B3 %s doesn't provide onDisabled() plugin hook" % b3_version)
+    @unittest2.skipUnless(HAS_ENABLE_DISABLE_HOOKS, "B3 %s doesn't provide onDisable() plugin hook" % b3_version)
     def test_plugin_disable(self):
         # WHEN
         event = self.console.getEventID('EVT_CLIENT_JUMP_RUN_START')
@@ -212,9 +217,11 @@ class Test_events(JumperTestCase):
     @unittest2.skipUnless(HAS_ENABLE_DISABLE_HOOKS, "B3 %s doesn't provide onEnable() plugin hook" % b3_version)
     def test_plugin_enable(self):
         # GIVEN
+        self.p.console.write = Mock()
         self.p.disable()
         self.p.settings['cycle_count'] = 0
         self.console.game.mapName = 'ut4_casa'
         # WHEN
         self.p.enable()
+        self.p.console.write.assert_called_with('cyclemap')
         self.assertEqual(1, self.p.settings['cycle_count'])

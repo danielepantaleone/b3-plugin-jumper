@@ -31,6 +31,9 @@ class Test_commands(JumperTestCase):
         with logging_disabled():
             from b3.fake import FakeClient
 
+        # prevent the test to query the api: i'll implement this someday
+        when(self.p).getMapsData().thenReturn(dict())
+
         # create some clients
         self.mike = FakeClient(console=self.console, name="Mike", guid="mikeguid", team=TEAM_FREE, groupBits=128)
         self.bill = FakeClient(console=self.console, name="Bill", guid="billguid", team=TEAM_FREE, groupBits=1)
