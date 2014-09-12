@@ -135,22 +135,13 @@ class JumpRun(object):
     time_edit = None
     jumprun_id = None
 
-    def __init__(self, plugin, client, mapname, way_id,
-                 demo=None, way_time=None, way_name=None,
-                 time_add=None, time_edit=None, jumprun_id=None):
+    def __init__(self, plugin, **kwargs):
         """
         Object constructor
         """
         self.p = plugin
-        self.client = client
-        self.mapname = mapname
-        self.demo = demo
-        self.way_id = way_id
-        self.way_time = way_time
-        self.way_name = way_name
-        self.time_add = time_add
-        self.time_edit = time_edit
-        self.jumprun_id = jumprun_id
+        for k, v in kwargs.iteritems():
+            setattr(self, k, v)
 
     def start(self):
         """
