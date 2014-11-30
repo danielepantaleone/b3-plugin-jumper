@@ -11,7 +11,7 @@ possibility to list player and map records.
 Download
 --------
 
-Latest version available [here](https://github.com/FenixXx/b3-plugin-jumper/archive/master.zip).
+Latest version available [here](https://github.com/danielepantaleone/b3-plugin-jumper/archive/master.zip).
 
 Installation
 ------------
@@ -62,4 +62,4 @@ If you have found a bug or have a suggestion for this plugin, please report it o
 [B3]: http://www.bigbrotherbot.net/ "BigBrotherBot (B3)"
 [Support]: http://forum.bigbrotherbot.net/plugins-by-fenix/jumper-plugin-(by-mr-click)/ "Support topic on the B3 forums"
 
-[![Build Status](https://travis-ci.org/FenixXx/b3-plugin-jumper.svg?branch=master)](https://travis-ci.org/FenixXx/b3-plugin-jumper)
+[![Build Status](https://travis-ci.org/danielepantaleone/b3-plugin-jumper.svg?branch=master)](https://travis-ci.org/danielepantaleone/b3-plugin-jumper)
