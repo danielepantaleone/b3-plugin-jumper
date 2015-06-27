@@ -8,6 +8,10 @@ A [BigBrotherBot][B3] plugin provides an advanced statistics system for Urban Te
 The plugin is capable of storing permanently all the timings performed during jump runs, offering also the
 possibility to list player and map records.
 
+******
+*NOTE: since B3 v1.10.1 beta this plugin has been included in the standard plugins set, thus all patches and updates will be performed in the official B3 repository.*
+******
+
 Download
 --------
 
